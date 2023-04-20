@@ -6,7 +6,7 @@ class Conversor
 {
 public:
     Conversor();
-    void floattoIEE ();
+    union Code floattoIEE (float num);
     void floattoIEE2 ();
     void IEEtofloat ();
     void IEEtofloat2 ();

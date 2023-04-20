@@ -21,10 +21,12 @@ union Code {
 };
 
 
-void Conversor::floattoIEE (){
+union Code Conversor::floattoIEE (float num){
     std::cout << "hola" <<std::endl;
-    /*union Code a;
-    printf ("Introduce un número: ");
+    union Code a;
+    a.numero = num;
+    return a;
+    /*printf ("Introduce un número: ");
     scanf ("%f", &a.numero);
     printf("Signo: %u \n",a.bitfield.sign);
     printf("Exponente: %u \n",a.bitfield.expo);
