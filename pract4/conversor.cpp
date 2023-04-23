@@ -22,19 +22,13 @@ union Code {
 
 
 union Code Conversor::floattoIEE (float num){
-    std::cout << "hola" <<std::endl;
     union Code a;
     a.numero = num;
     return a;
-    /*printf ("Introduce un número: ");
-    scanf ("%f", &a.numero);
-    printf("Signo: %u \n",a.bitfield.sign);
-    printf("Exponente: %u \n",a.bitfield.expo);
-    printf("Parte Fraccionaria : %u \n", a.bitfield.partFrac);*/
-    //Tener esto en cuenta en las operaciones
-    //(a.sig != b.sig & a.exp==b.exp & a.mant==b.mant) res = 0
+
 
 }
+
 
 void Conversor::floattoIEE2 (){
 

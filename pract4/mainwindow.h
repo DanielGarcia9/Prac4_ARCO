@@ -14,9 +14,11 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+     void IEEHEX(union Code num, int pos);
 
 private slots:
     void on_pushPlus_clicked();
+
 
 private:
     Ui::MainWindow *ui;
