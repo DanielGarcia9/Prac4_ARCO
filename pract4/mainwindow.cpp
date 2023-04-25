@@ -175,10 +175,55 @@ void MainWindow::on_pushPlus_clicked()
                 P = res;
 
                 if(signA != signB && P[n-1] == 1 && acarreo == 0){
-                    //Paso 9
+                    //solo ocurre si d = 0
+                    P = ~P;
+                    complemP = true;
                 }
 
+                if (signA == signB && acarreo == 1){
+                    st = st || r || g; //triplazo
+                    r = P[0];
 
+                    P[0] = acarreo;
+                    for (int i = 2; i < 24; i++){
+                        aux = P[i-1];
+                        P[i] = aux;
+                    }
+                    expSuma = expSuma + 1;
+                }else {
+                    int k;//numero de bits desplazar p para que sea mantisa normalizada, matisa normalizada tiene unicamente 24 bits y empieza por 1
+                    if (k == 0){
+                        st = r || st;
+                        r = g;
+                    }if (k > 1){
+                        r = 0;
+                        st = 0;
+                    }
+                    for (int i = 0; i < 24; i++){
+                        //desplazar p y g a la izq k bits
+                    }
+                    expSuma = expSuma - k;
+                }
+
+                if ((r = 1 && st = 1) || (r = 1 && st = 0 && P[0]==1)){
+                    P = P+1; // terner en cuenta acarreo como en el punto 8
+                    acarreo2 = 0;
+                    P[0] = acarreo2;
+                    for (int i = 2; i < 24; i++){
+                        aux = P[i-1];
+                        P[i] = aux;
+                    }
+                    expSuma = expSuma + 1;
+                }
+                bitset<24> matSuma = P;
+                bitset<1> signSuma;
+                if (opIntercambiados = false && complemP = true){
+                      signSuma = signB;
+                }else {
+                      signSuma = signA;
+                }
+
+                int resultado = signSuma*matSuma // * 2^es
             }
         }else{
             cout << "mal2" << endl;  //Val mal
