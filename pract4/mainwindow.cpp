@@ -177,23 +177,24 @@ void MainWindow::on_pushPlus_clicked()
                 if(signA != signB && P[n-1] == 1 && acarreo == 0){
                     //solo ocurre si d = 0
                     P = ~P;
+                    P = P.to_ulong()+1;
                     complemP = true;
                 }
 
                 if (signA == signB && acarreo == 1){
-                    st = st || r || g; //triplazo
-                    r = P[0];
+                    st[0] = st[0] | r[0] | g[0]; //triplazo
+                    r[0] = P[0];
 
-                    P[0] = acarreo;
+                    P[n-1] = acarreo;
                     for (int i = 2; i < 24; i++){
                         aux = P[i-1];
                         P[i] = aux;
                     }
-                    expSuma = expSuma + 1;
+                    expSuma = expSuma.to_ulong() + 1;
                 }else {
                     int k;//numero de bits desplazar p para que sea mantisa normalizada, matisa normalizada tiene unicamente 24 bits y empieza por 1
                     if (k == 0){
-                        st = r || st;
+                        st[0] = r[0] | st[0];
                         r = g;
                     }if (k > 1){
                         r = 0;
@@ -202,10 +203,10 @@ void MainWindow::on_pushPlus_clicked()
                     for (int i = 0; i < 24; i++){
                         //desplazar p y g a la izq k bits
                     }
-                    expSuma = expSuma - k;
+                    expSuma = expSuma.to_ulong() - k;
                 }
 
-                if ((r = 1 && st = 1) || (r = 1 && st = 0 && P[0]==1)){
+                if ((r[0] == 1 && st[0] == 1) || (r[0] == 1 && st[0] == 0 && P[0]==1)){
                     P = P+1; // terner en cuenta acarreo como en el punto 8
                     acarreo2 = 0;
                     P[0] = acarreo2;
@@ -213,11 +214,11 @@ void MainWindow::on_pushPlus_clicked()
                         aux = P[i-1];
                         P[i] = aux;
                     }
-                    expSuma = expSuma + 1;
+                    expSuma = expSuma.to_ulong() + 1;
                 }
                 bitset<24> matSuma = P;
                 bitset<1> signSuma;
-                if (opIntercambiados = false && complemP = true){
+                if (opIntercambiados == false && complemP == true){
                       signSuma = signB;
                 }else {
                       signSuma = signA;
