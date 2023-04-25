@@ -4,6 +4,7 @@
 #include <iostream>
 #include <bitset>
 #include <sstream>
+#include <cmath>
 
 using namespace std;
 
@@ -66,7 +67,7 @@ void MainWindow::on_pushPlus_clicked()
             for(int i = 0; i < 24; i++){
                 mantisaB[i] = bits2[i];
             }
-
+                cout << signA << expA << mantisaA <<endl;
             if(signA != signB && expA == expB && mantisaA == mantisaB){
                 union Code res;
                 res.numero = 0;
@@ -128,16 +129,14 @@ void MainWindow::on_pushPlus_clicked()
 
                 if(signA != signB){
                     //desplazar los ultimos
+                    P >>= d;
+
                     for(int i = 0; i < d; i++){
                         P[23-i] = 1;
                     }
                 }else{
-                    for(int i = 0; i < d; i++){
-                        P[23-i] = 0;
-                    }
+                    P >>= d;
                 }
-                cout << mantisaA << endl;
-                cout << P << endl;
                 bitset<24> res;
                 int acarreo = 0;   //Suma binaria con acarreo
 
@@ -146,36 +145,12 @@ void MainWindow::on_pushPlus_clicked()
                     res[i] = suma % 2;
                     acarreo = suma / 2;
                 }
-                /*for(int i = 23; i >= 0; i--){
-                    if(mantisaA[i] == 0 && P[i] == 0){  // 0 y 0
-                        if(acarreo == 0){
-                            res[i] = 0;
-                        }else{
-                            res[i] = 1;
-                            acarreo = 0;
-                        }
-                    }else if(mantisaA[i] == 1 && P[i] == 1){  // 1 y 1
-                        if(acarreo == 0){
-                            res[i] = 0;
-                            acarreo = 1;
-                        }else{
-                            res[i] = 1;
-                            acarreo = 1;
-                        }
-                    }else{ // 1 y 0
-                        if(acarreo == 0){
-                            res[i] = 1;
-                        }else{
-                            res[i] = 0;
-                            acarreo = 1;
-                        }
-                    }
-                }*/
+
 
                 P = res;
 
                 if(signA != signB && P[n-1] == 1 && acarreo == 0){
-                    //solo ocurre si d = 0
+                //solo ocurre si d = 0
                     P = ~P;
                     P = P.to_ulong()+1;
                     complemP = true;
@@ -185,36 +160,53 @@ void MainWindow::on_pushPlus_clicked()
                     st[0] = st[0] | r[0] | g[0]; //triplazo
                     r[0] = P[0];
 
-                    P[n-1] = acarreo;
+                    P[0] = acarreo;
                     for (int i = 2; i < 24; i++){
                         aux = P[i-1];
                         P[i] = aux;
                     }
                     expSuma = expSuma.to_ulong() + 1;
                 }else {
-                    int k;//numero de bits desplazar p para que sea mantisa normalizada, matisa normalizada tiene unicamente 24 bits y empieza por 1
+                    int k = 0;//numero de bits desplazar p para que sea mantisa normalizada, matisa normalizada tiene unicamente 24 bits y empieza por 1
+                    for(int i = 0; i < 24; i++){
+                        if(P[i] == 1){
+                            k = 0;
+                        }else{
+                            k++;
+                        }
+                    }
                     if (k == 0){
                         st[0] = r[0] | st[0];
                         r = g;
                     }if (k > 1){
-                        r = 0;
-                        st = 0;
+                        r[0] = 0;
+                        st[0] = 0;
                     }
-                    for (int i = 0; i < 24; i++){
+                    P <<= k;
+                    for (int i = 0; i < k; i++){
                         //desplazar p y g a la izq k bits
+                        P[i] = g[0];
                     }
                     expSuma = expSuma.to_ulong() - k;
                 }
 
                 if ((r[0] == 1 && st[0] == 1) || (r[0] == 1 && st[0] == 0 && P[0]==1)){
-                    P = P+1; // terner en cuenta acarreo como en el punto 8
-                    acarreo2 = 0;
-                    P[0] = acarreo2;
-                    for (int i = 2; i < 24; i++){
-                        aux = P[i-1];
-                        P[i] = aux;
+
+                    int acarreo2 = 0;
+                    if(P[0] == 1){
+                        acarreo2 = 1;
                     }
-                    expSuma = expSuma.to_ulong() + 1;
+                    P = P.to_ulong() + 1;
+
+                    if(P.to_ulong() > (1<<24) - 1){
+                        acarreo2 = 1;
+                    }
+                    if(acarreo2 == 1){
+                        P >>= 1;
+                        P[23] = acarreo2;
+                        expSuma = expSuma.to_ulong() +1;
+                    }
+
                 }
                 bitset<24> matSuma = P;
                 bitset<1> signSuma;
@@ -224,7 +216,16 @@ void MainWindow::on_pushPlus_clicked()
                       signSuma = signA;
                 }
 
-                int resultado = signSuma*matSuma // * 2^es
+                bitset<32> resultado;
+                for(int i = 0; i < 23; i++){
+                    resultado[i] = matSuma[i];
+                }
+                for(int i = 0; i < 8; i++){
+                    resultado[23+i] = expSuma[i];
+                }
+                resultado[31] = signSuma[0];
+
+                cout << resultado << endl;
             }
         }else{
             cout << "mal2" << endl;  //Val mal
@@ -264,4 +265,3 @@ void MainWindow::IEEHEX(union Code num, int pos){ //1 op1    2 op2   3 res
 
 
 }
-
