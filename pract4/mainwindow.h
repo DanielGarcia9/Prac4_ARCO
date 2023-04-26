@@ -15,6 +15,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
      void IEEHEX(union Code num, int pos);
+     void REALHEX(union Code num);
 
 private slots:
     void on_pushPlus_clicked();

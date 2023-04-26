@@ -67,7 +67,6 @@ void MainWindow::on_pushPlus_clicked()
             for(int i = 0; i < 24; i++){
                 mantisaB[i] = bits2[i];
             }
-                cout << signA << expA << mantisaA <<endl;
             if(signA != signB && expA == expB && mantisaA == mantisaB){
                 union Code res;
                 res.numero = 0;
@@ -97,6 +96,7 @@ void MainWindow::on_pushPlus_clicked()
                 }
 
                 bitset<8> expSuma = expA;
+                cout << expSuma << endl;
                 int d = expA.to_ulong() - expB.to_ulong();
 
                 if(d < 0){
@@ -104,8 +104,10 @@ void MainWindow::on_pushPlus_clicked()
                 }
 
                 if(signA != signB){
+                    cout << "Comp2 " << mantisaB << endl;
                     mantisaB = ~mantisaB;
                     mantisaB = mantisaB.to_ulong()+1;
+                    cout << "Comp2 " << mantisaB << endl;
                 }
 
                 P = mantisaB;
@@ -126,9 +128,11 @@ void MainWindow::on_pushPlus_clicked()
                         st[0] = st[0] | P[aux];
                     }
                 }
-
+                cout << "D " << d << endl;
+                cout << "Desp " << P << endl;
                 if(signA != signB){
                     //desplazar los ultimos
+
                     P >>= d;
 
                     for(int i = 0; i < d; i++){
@@ -137,6 +141,7 @@ void MainWindow::on_pushPlus_clicked()
                 }else{
                     P >>= d;
                 }
+                cout << "Desp " << P << endl;
                 bitset<24> res;
                 int acarreo = 0;   //Suma binaria con acarreo
 
@@ -146,52 +151,60 @@ void MainWindow::on_pushPlus_clicked()
                     acarreo = suma / 2;
                 }
 
-
                 P = res;
 
                 if(signA != signB && P[n-1] == 1 && acarreo == 0){
                 //solo ocurre si d = 0
+                    cout << "Comp2 " << P << endl;
                     P = ~P;
                     P = P.to_ulong()+1;
                     complemP = true;
+                    cout << "Comp2 " << P << endl;
                 }
 
+
                 if (signA == signB && acarreo == 1){
-                    st[0] = st[0] | r[0] | g[0]; //triplazo
+                    cout << P << endl;
+                    st = st | r | g; //triplazo
                     r[0] = P[0];
 
-                    P[0] = acarreo;
-                    for (int i = 2; i < 24; i++){
-                        aux = P[i-1];
-                        P[i] = aux;
-                    }
+                    P >>= 1;
+                    P[23] = acarreo;
+                    cout << P << endl;
                     expSuma = expSuma.to_ulong() + 1;
+                    cout << expSuma << endl;
                 }else {
+                    cout << P << endl;
                     int k = 0;//numero de bits desplazar p para que sea mantisa normalizada, matisa normalizada tiene unicamente 24 bits y empieza por 1
                     for(int i = 0; i < 24; i++){
                         if(P[i] == 1){
-                            k = 0;
+                            k = 1;
                         }else{
                             k++;
                         }
                     }
+                    cout << "K " << k << endl;
                     if (k == 0){
-                        st[0] = r[0] | st[0];
+                        st = r | st;
                         r = g;
                     }if (k > 1){
                         r[0] = 0;
                         st[0] = 0;
                     }
                     P <<= k;
+                    cout << "g " << g << endl;
                     for (int i = 0; i < k; i++){
                         //desplazar p y g a la izq k bits
                         P[i] = g[0];
                     }
+                    cout << P << endl;
+                    cout << expSuma.to_ulong() << endl;
                     expSuma = expSuma.to_ulong() - k;
+                    cout << expSuma.to_ulong() << endl;
                 }
 
                 if ((r[0] == 1 && st[0] == 1) || (r[0] == 1 && st[0] == 0 && P[0]==1)){
-
+                    cout << "entra" << endl;
                     int acarreo2 = 0;
                     if(P[0] == 1){
                         acarreo2 = 1;
@@ -208,7 +221,8 @@ void MainWindow::on_pushPlus_clicked()
                     }
 
                 }
-                bitset<24> matSuma = P;
+                cout << expSuma << endl;
+                bitset<24> mantSuma = P;
                 bitset<1> signSuma;
                 if (opIntercambiados == false && complemP == true){
                       signSuma = signB;
@@ -218,12 +232,18 @@ void MainWindow::on_pushPlus_clicked()
 
                 bitset<32> resultado;
                 for(int i = 0; i < 23; i++){
-                    resultado[i] = matSuma[i];
+                    resultado[i] = mantSuma[i];
                 }
                 for(int i = 0; i < 8; i++){
                     resultado[23+i] = expSuma[i];
                 }
                 resultado[31] = signSuma[0];
+
+                union Code resu;
+                resu.bitfield.sign = signSuma.to_ulong();
+                resu.bitfield.expo = expSuma.to_ulong();
+
+
 
                 cout << resultado << endl;
             }
@@ -263,5 +283,16 @@ void MainWindow::IEEHEX(union Code num, int pos){ //1 op1    2 op2   3 res
             break;
     }
 
+
+}
+
+void MainWindow::REALHEX(union Code num){
+    string fin = to_string(num.numero);
+    ui->textReal->setText(QString::fromStdString(fin));
+
+    stringstream ss;
+    ss << hexfloat << num.numero;
+    QString hex = QString::fromStdString(ss.str());
+    ui->textHexa->setText(hex);
 
 }
