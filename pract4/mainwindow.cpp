@@ -74,9 +74,7 @@ void MainWindow::on_pushPlus_clicked()
                 ui->textReal->setText(QString::fromStdString(aux));
                 IEEHEX(res, 3);
             }else{
-                bitset<1> g(0);
-                bitset<1> r(0);
-                bitset<1> st(0);
+                bitset<1> g(0), r(0), st(0);
                 bitset<24> P;
                 int n = 24;
                 bool opIntercambiados = false;
@@ -96,7 +94,6 @@ void MainWindow::on_pushPlus_clicked()
                 }
 
                 bitset<8> expSuma = expA;
-                cout << expSuma << endl;
                 int d = expA.to_ulong() - expB.to_ulong();
 
                 if(d < 0){
@@ -104,10 +101,8 @@ void MainWindow::on_pushPlus_clicked()
                 }
 
                 if(signA != signB){
-                    cout << "Comp2 " << mantisaB << endl;
                     mantisaB = ~mantisaB;
                     mantisaB = mantisaB.to_ulong()+1;
-                    cout << "Comp2 " << mantisaB << endl;
                 }
 
                 P = mantisaB;
@@ -129,7 +124,7 @@ void MainWindow::on_pushPlus_clicked()
                     }
                 }
                 cout << "D " << d << endl;
-                cout << "Desp " << P << endl;
+
                 if(signA != signB){
                     //desplazar los ultimos
 
@@ -141,7 +136,7 @@ void MainWindow::on_pushPlus_clicked()
                 }else{
                     P >>= d;
                 }
-                cout << "Desp " << P << endl;
+
                 bitset<24> res;
                 int acarreo = 0;   //Suma binaria con acarreo
 
@@ -153,37 +148,34 @@ void MainWindow::on_pushPlus_clicked()
 
                 P = res;
 
-                if(signA != signB && P[n-1] == 1 && acarreo == 0){
+                if(signA != signB && P[23] == 1 && acarreo == 0){
                 //solo ocurre si d = 0
-                    cout << "Comp2 " << P << endl;
                     P = ~P;
                     P = P.to_ulong()+1;
                     complemP = true;
-                    cout << "Comp2 " << P << endl;
-                }
+                }  //Hasta aqui bien
 
 
                 if (signA == signB && acarreo == 1){
-                    cout << P << endl;
-                    st = st | r | g; //triplazo
+                    st = st | r | g;
                     r[0] = P[0];
 
                     P >>= 1;
                     P[23] = acarreo;
-                    cout << P << endl;
+                    cout << expSuma << endl;
                     expSuma = expSuma.to_ulong() + 1;
                     cout << expSuma << endl;
-                }else {
+                }else {                                             //1E-37 + 1E-37 deberia ser exponente 5
                     cout << P << endl;
                     int k = 0;//numero de bits desplazar p para que sea mantisa normalizada, matisa normalizada tiene unicamente 24 bits y empieza por 1
-                    for(int i = 0; i < 24; i++){
-                        if(P[i] == 1){
-                            k = 1;
-                        }else{
+                    for (int i = 23; i >= 0; i--) {
+                        if (P[i] == 1) {
                             k++;
+                            break;
                         }
+                        k++;
                     }
-                    cout << "K " << k << endl;
+                    cout << "K " << k << endl;   //Algo sigue estando mal
                     if (k == 0){
                         st = r | st;
                         r = g;
@@ -191,6 +183,7 @@ void MainWindow::on_pushPlus_clicked()
                         r[0] = 0;
                         st[0] = 0;
                     }
+                    k--;
                     P <<= k;
                     cout << "g " << g << endl;
                     for (int i = 0; i < k; i++){
@@ -229,7 +222,7 @@ void MainWindow::on_pushPlus_clicked()
                 }else {
                       signSuma = signA;
                 }
-
+                cout << mantSuma << endl;
                 bitset<32> resultado;
                 for(int i = 0; i < 23; i++){
                     resultado[i] = mantSuma[i];
@@ -239,19 +232,35 @@ void MainWindow::on_pushPlus_clicked()
                 }
                 resultado[31] = signSuma[0];
 
+                string re = resultado.to_string();
+                ui->textBi->setText(QString::fromStdString(re));
+
                 union Code resu;
                 resu.bitfield.sign = signSuma.to_ulong();
                 resu.bitfield.expo = expSuma.to_ulong();
+                bitset<23> frac;
+                for(int i = 0; i < 23; i++){
+                    frac[i] = resultado[i];
+                }
+                resu.bitfield.partFrac = frac.to_ulong();
+                REALHEX(resu);
 
-
-
-                cout << resultado << endl;
+                cout << resultado << endl;      //FUNCIONAN TODAS LAS PRUEBAS MENOS CON E40 y 2E-37
             }
         }else{
-            cout << "mal2" << endl;  //Val mal
+            if(isinf(num2)){
+                cout << "inf" << endl; //inf
+            }else{
+                cout << "mal2" << endl;  //Val mal
+            }
+
         }
     } else {
-        cout << "mal" << endl;   //Val mal
+        if(isinf(num1)){
+            cout << "inf" << endl; //inf
+        }else{
+            cout << "mal" << endl;  //Val mal
+        }
     }
 }
 
