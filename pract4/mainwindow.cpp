@@ -33,7 +33,7 @@ union Code {
 };
 
 
-void MainWindow::on_pushPlus_clicked()
+void MainWindow::on_pushPlus_clicked() //SUMA
 {
     Conversor conver;
     QString val1 = ui->textOp1Real->toPlainText();
@@ -304,4 +304,130 @@ void MainWindow::REALHEX(union Code num){
     QString hex = QString::fromStdString(ss.str());
     ui->textHexa->setText(hex);
 
+}
+
+void MainWindow::on_pushMult_clicked() //mult
+{
+    Conversor conver;
+        QString val1 = ui->textOp1Real->toPlainText();
+
+        bool esNumero = false;
+        float num1 = val1.toFloat(&esNumero);
+
+        if (esNumero) {
+            QString val2 = ui->textOp2Real->toPlainText();
+            float num2 = val2.toFloat(&esNumero);
+            if(esNumero){
+                union Code a = conver.floattoIEE(num1);
+                IEEHEX(a, 1);
+                union Code b = conver.floattoIEE(num2);
+                IEEHEX(b, 2);
+                bitset<1> signA(a.bitfield.sign);
+                bitset<1> signB(b.bitfield.sign);
+                bitset<8> expA(a.bitfield.expo);
+                bitset<8> expB(b.bitfield.expo);
+
+                int n = 24;
+
+                int* bin = reinterpret_cast<int*>(&a.numero); //repre binaria del float
+                bitset<32> bits(*bin);
+                bitset<24> mantisaA;
+                for(int i = 0; i < 24; i++){
+                    mantisaA[i] = bits[i];
+                }
+
+                int* bin2 = reinterpret_cast<int*>(&b.numero); //repre binaria del float
+                bitset<32> bits2(*bin2);
+                bitset<24> mantisaB;
+                for(int i = 0; i < 24; i++){
+                    mantisaB[i] = bits2[i];
+                }
+                bitset<48> P;
+                //paso 1
+                signProd = signA * signB;
+                //paso 2
+                //estan en exceso? si es asi restar 127
+                expProd = expA + expB;
+                //paso 3
+
+                P = 0;
+                for (int i = 0; i < 24; i++){
+                    if (mantisaA[0] == 0){
+                        P = sumar(P,mantisaB);
+                        c = acarreo;
+                    }else {
+                        P = sumar(P,0);
+                    }
+                    lastBit = P[24];
+                    P>>= 1;
+                    P[0] = c;
+                    mantisaA >>= 1;
+                    mantisaA[0] = lastBit;
+
+                }
+                mantisaP = (P.to_ulong() << 24) | mantisaA.to_ulong();
+
+                if (mantisaP[n-1] == 0){
+                    bitA = mantisaA[23];
+                    P <<= 1;
+                    P[0] = bitA;
+                    mantisaA <<= 1;
+                }else {
+                    expProd = expProd + 1;
+                }
+                bitset<1> r= mantisaA[n-1];//bit redondeo
+
+                bitset<1> st = 0;//Bit sticky
+                for (int i = n - 2; i >= 0; i--) {
+                    st.set(0, st[0] | mantisaA[i]);
+                }
+
+                if ((r[0] == 1 && st[0] == 1) || (r[0] == 1 && st[0] == 0 && P[0] == 1)){
+                    P = P + 1;
+                }
+                //desbordamientos
+                expMax= 0;
+                expMin= 0;
+                if (expProd > expMax){
+                    //overflow
+                    cout>> "El numero es infinito" >>endl;
+                }else {
+                    if (expProd<expMin){
+                        int t = expMin - expProd;
+                        if (t >= 24){
+                            //underflow
+                            cout >> "Not a number, not enought bits to show the number" >>endl;
+                        }else {
+                            //desplazar (P,A) t bits derecha
+                            mntisaA >>= t;
+                          // Colocar los bits de A en P a partir de la posición pos
+                          for (int i = 0; i < 24; i++) {
+                            P.set(t + i, mantisaA[i]);
+                          }
+                            expProd = expMin;
+                        }
+                    }
+                }
+                //operandos denormales
+                if (expProd < expMin){
+                    cout << "Not a number" << endl;
+                }
+                else if (expProd > expMin){
+                    t1 = expProd - expMin;
+                    t2 = //numero de bits desplazar (P,A) hacia izq para que sea normalizada
+                    t = min(t1,t2);
+                    expProd = expProd - t;
+                    //desplazar (P,A) t bits izq
+                    mantisaA <<= t;
+                    // Colocar los bits de A en P a partir de la posición pos
+                    for (int i = 24; i > 0; i--) {
+                        P.set(t + i, mantisaA[i]);
+                    }
+                }else {
+                    //resultado un denormal directamente
+                }
+                //tener en cuenta operandos 0
+                //0 x n = 0
+                //0 x +-infinito = indeterminacion(NaN)
+                bitset<48> mantisaP = P;
 }
