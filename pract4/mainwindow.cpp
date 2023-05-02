@@ -308,7 +308,7 @@ void MainWindow::REALHEX(union Code num){
 
 void MainWindow::on_pushMult_clicked() //mult
 {
-    /*Conversor conver;
+    Conversor conver;
         QString val1 = ui->textOp1Real->toPlainText();
 
         bool esNumero = false;
@@ -342,98 +342,131 @@ void MainWindow::on_pushMult_clicked() //mult
                 for(int i = 0; i < 24; i++){
                     mantisaB[i] = bits2[i];
                 }
-                bitset<48> P;
+
                 //paso 1
                 bitset<1> signProd;
-                signProd[0] = signA[0] * signB[0];
+                if(signA[0] == signB[0]){
+                    signProd[0] = 0;
+                }else{
+                    signProd[0] = 1;
+                }
                 //paso 2
                 //estan en exceso? si es asi restar 127
-                expProd = expA + expB;
-                //paso 3
-
-                P = 0;
-                for (int i = 0; i < 24; i++){
-                    if (mantisaA[0] == 0){  //??
-                        P = sumar(P,mantisaB);
-                        c = acarreo;
-                    }else {
-                        P = sumar(P,0);
-                    }
-                    lastBit = P[24];
-                    P>>= 1;
-                    P[0] = c;
-                    mantisaA >>= 1;
-                    mantisaA[0] = lastBit;
-
-                }
-                mantisaP = (P.to_ulong() << 24) | mantisaA.to_ulong();
-
-                if (mantisaP[n-1] == 0){
-                    bitA = mantisaA[23];
-                    P <<= 1;
-                    P[0] = bitA;
-                    mantisaA <<= 1;
-                }else {
-                    expProd = expProd + 1;
-                }
-                bitset<1> r;
-                r[0] = mantisaA[n-1];//bit redondeo
-
-                bitset<1> st = 0;//Bit sticky
-                for (int i = n - 2; i >= 0; i--) {
-                    st.set(0, st[0] | mantisaA[i]);
-                }
-
-                if ((r[0] == 1 && st[0] == 1) || (r[0] == 1 && st[0] == 0 && P[0] == 1)){
-                    P = P.to_ulong() + 1;
-                }
-                //desbordamientos
-                int expMax= 0;
-                int expMin= 0;
-                if (expProd > expMax){
-                    //overflow
+                bitset<8> expProd;
+                int aux = expA.to_ulong() + expB.to_ulong() - 127;
+                if(aux > 255){
                     cout << "El numero es infinito" << endl;
-                }else {
-                    if (expProd<expMin){
-                        int t = expMin - expProd;
-                        if (t >= 24){
-                            //underflow
-                            cout << "Not a number, not enought bits to show the number" << endl;
+                }else{
+                    expProd = (expA.to_ulong()-127) + (expB.to_ulong()- 127) + 127;
+                    bitset<24> P(0);
+                    int c = 0;
+                    for (int i = 0; i < 24; i++){
+                        if (mantisaA[0] == 1){
+                            c = 0;
+                            for (int i = 0; i < 24; i++) {
+                                int suma = P[i] + mantisaB[i] + c;
+                                P[i] = suma % 2;
+                                c = suma / 2;
+                            }
                         }else {
-                            //desplazar (P,A) t bits derecha
-                            mantisaA >>= t;
-                          // Colocar los bits de A en P a partir de la posición pos
-                          for (int i = 0; i < 24; i++) {
-                            P.set(t + i, mantisaA[i]);
-                          }
-                            expProd = expMin;
+                            //P = P + 0?
+                        }
+                        bitset<1> lastBit;
+                        lastBit[0] = P[0];
+                        P>>= 1;
+                        P[23] = c;
+                        c = 0;
+                        mantisaA >>= 1;
+                        mantisaA[23] = lastBit[0];
+
+                    }
+
+                    bitset<48> PA;
+
+                    PA = (P.to_ulong() << 24) | mantisaA.to_ulong();
+
+
+
+                    if (PA[n-1] == 0){
+                        PA <<= 1;
+                    }else {
+                        expProd = expProd.to_ulong() + 1;
+                        cout << expProd <<endl;
+                    }
+
+
+                    bitset<1> r;
+                    r[0] = mantisaA[n-1];//bit redondeo
+
+                    bitset<1> st = 0;//Bit sticky
+                    for (int i = n - 2; i >= 0; i--) {
+                        st[0] = st[0] | mantisaA[i];
+                    }
+
+                    if ((r[0] == 1 && st[0] == 1) || (r[0] == 1 && st[0] == 0 && P[0] == 1)){
+                        P = P.to_ulong() + 1;
+                    }
+                    //desbordamientos
+                    int expMax= 255;
+                    int expMin= 1;
+                    if (expProd.to_ulong() > expMax){
+                        //overflow
+
+                    }else {
+                        if (expProd.to_ulong() < expMin){
+                            int t = expMin - expProd.to_ulong();
+                            if (t >= 24){
+                                //underflow
+                                cout << "Not a number, not enought bits to show the number" << endl;
+                            }else {
+                                //desplazar (P,A) t bits derecha
+                                bitset<1> aux;
+                                aux[0] = mantisaA[23];
+
+                                PA >>= t;
+                              // Colocar los bits de A en P a partir de la posición pos
+                                for(int i = 0; i < t; i++){
+                                    PA[23-i] = aux[0];
+                                }
+                                expProd = expMin;
+                            }
                         }
                     }
-                }
-                //operandos denormales
-                if (expProd < expMin){
-                    cout << "Not a number" << endl;
-                }
-                else if (expProd > expMin){
-                    t1 = expProd - expMin;
-                    t2 = //numero de bits desplazar (P,A) hacia izq para que sea normalizada
-                    t = min(t1,t2);
-                    expProd = expProd - t;
-                    //desplazar (P,A) t bits izq
-                    mantisaA <<= t;
-                    // Colocar los bits de A en P a partir de la posición pos
-                    for (int i = 24; i > 0; i--) {
-                        P.set(t + i, mantisaA[i]);
+                    //operandos denormales
+                    /*if (expProd.to_ulong() > expMin){
+                        int t1 = expProd.to_ulong() - expMin;
+                        int t2 = 0;//numero de bits desplazar (P,A) hacia izq para que sea normalizada
+                        for (int i = 23; i >= 0; i--) {
+                            if (P[i] == 1) {
+                                break;
+                            }
+                            t2++;
+                        }
+                        int t = min(t1,t2);
+                        expProd = expProd.to_ulong() - t;
+                        //desplazar (P,A) t bits izq    ARITMETICAMENTE??
+                        PA <<= t;
+
+                    }else if(expProd.to_ulong() == expMin) {
+                        //resultado un denormal directamente
+
+                    }*/
+                    //tener en cuenta operandos 0
+                    //0 x n = 0
+                    //0 x +-infinito = indeterminacion(NaN)
+                    bitset<23> mP;
+                    for(int i = 0; i < 23; i++){
+                        mP[22 - i] = PA[46-i];
                     }
-                }else {
-                    //resultado un denormal directamente
+
+                    cout << signProd << expProd << mP << endl;
                 }
-                //tener en cuenta operandos 0
-                //0 x n = 0
-                //0 x +-infinito = indeterminacion(NaN)
-                bitset<48> mantisaP = P;
-            }
-        }*/
+                }
+
+                //paso 3
+
+
+        }
 }
 
 void MainWindow::on_pushDiv_clicked()
@@ -500,4 +533,3 @@ void MainWindow::on_pushDiv_clicked()
     }
 
 }
-
