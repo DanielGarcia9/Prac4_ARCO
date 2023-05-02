@@ -23,6 +23,8 @@ private slots:
 
     void on_pushMult_clicked();
 
+    void on_pushDiv_clicked();
+
 private:
     Ui::MainWindow *ui;
 };
