@@ -13,10 +13,12 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
+        alu.cpp \
         conversor.cpp \
         mainwindow.cpp
 
 HEADERS  += mainwindow.h \
+    alu.h \
     conversor.h
 
 FORMS    += mainwindow.ui
