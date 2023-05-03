@@ -3,6 +3,7 @@
 #include <bitset>
 #include <sstream>
 #include <cmath>
+#include "conversor.h"
 
 using namespace std;
 
@@ -20,7 +21,7 @@ union Code {
 
 ALU::ALU()
 {
-
+Conversor conver;
 }
 
 union Code ALU::suma(union Code a, union Code b){
@@ -372,7 +373,116 @@ union Code ALU::multiplicacion(union Code a, union Code b){
 
 }
 
-union Code ALU::division(union Code a, union Code b){
+union Code ALU::restar(union Code a, union Code b)
+{
+    b.bitfield.sign = 1;
+    return this->suma (a,b);
+}
+
+union Code ALU::division(union Code a, union Code b)
+{
+        Conversor conver;
+
+        bitset<1> signA(a.bitfield.sign);
+        bitset<1> signB(b.bitfield.sign);
+        bitset<8> expA(a.bitfield.expo);
+        bitset<8> expB(b.bitfield.expo);
+
+        int* bin = reinterpret_cast<int*>(&a.numero); //repre binaria del float
+        bitset<32> bits(*bin);
+        bitset<24> mantisaA;
+        for(int i = 0; i < 24; i++){
+            mantisaA[i] = bits[i];
+        }
+
+        int* bin2 = reinterpret_cast<int*>(&b.numero); //repre binaria del float
+        bitset<32> bits2(*bin2);
+        bitset<24> mantisaB;
+        for(int i = 0; i < 24; i++){
+            mantisaB[i] = bits2[i];
+        }
+
+        bitset<23> partFracA;
+        for(int i = 0; i < 23; i++){
+            partFracA[i] = mantisaA[i];
+        }
+        unsigned int decimalA = partFracA.to_ulong();
+        double fraccionarioA = decimalA / std::pow(2, 23);
+        float valorA = 1 + fraccionarioA;
+        std::cout << "El valor fraccionario de A es: " << valorA << std::endl;
+
+
+        bitset<23> partFracB;
+        for(int i = 0; i < 23; i++){
+            partFracB[i] = mantisaA[i];
+        }
+        unsigned int decimalB = partFracB.to_ulong();
+        double fraccionarioB = decimalB / std::pow(2, 23);
+        float valorB = 1 + fraccionarioB;
+        std::cout << "El valor fraccionario de B es: " << valorB << std::endl;
+
+        float Bprima;
+        if (valorB > 1 && valorB < 1.25) {
+            Bprima = 1;
+        }else if (valorB > 1.25 && valorB < 2){
+            Bprima = 0.8;
+        }
+
+        union Code A = conver.floattoIEE(valorA);
+
+        union Code B = conver.floattoIEE(valorB);
+
+        union Code Bp = conver.floattoIEE(Bprima);
+
+
+        union Code X = this->multiplicacion (A, Bp);
+
+        union Code Y = this->multiplicacion (B, Bp);
+
+
+        union Code R;
+        union Code auxY;
+        union Code auxX;
+        union Code resultado;
+        union Code val = conver.floattoIEE(2);
+
+        while (1){
+
+            R = this->restar (val,Y);
+            auxY = this->multiplicacion (Y,R);
+            auxX = this->multiplicacion (X,R);
+            resultado = this->restar(auxX,X);
+            float num = resultado.numero;
+
+            if (num < 0.0001){
+                break;
+            }
+            X = auxX;
+            Y = auxY;
+        }
+
+        bitset<1> signDiv;
+        signDiv[0] = signA[0] ^ signB[0];
+
+
+        bitset<1> signo(auxX.bitfield.sign);
+        bitset<8> expo(auxX.bitfield.expo);
+        bitset<23> fracc(auxX.bitfield.partFrac);
+
+        bitset<8> expDiv;
+
+        expDiv = expA.to_ulong ()- expB.to_ulong ()+ expo.to_ulong ();
+
+        union Code res;
+        res.bitfield.sign = signDiv.to_ulong();
+        res.bitfield.expo = expDiv.to_ulong();
+        res.bitfield.partFrac = fracc.to_ulong();
+
+        cout << signDiv << expDiv << fracc << endl;
+
+        return res;
 
 }
+
+
 

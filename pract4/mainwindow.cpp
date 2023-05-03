@@ -174,64 +174,48 @@ void MainWindow::on_pushMult_clicked() //mult
 void MainWindow::on_pushDiv_clicked()
 {
     Conversor conver;
-    QString val1 = ui->textOp1Real->toPlainText();
+        QString val1 = ui->textOp1Real->toPlainText();
 
-    bool esNumero = false;
-    float num1 = val1.toFloat(&esNumero);
+        bool esNumero = false;
+        float num1 = val1.toFloat(&esNumero);
 
-    if (esNumero) {
-        QString val2 = ui->textOp2Real->toPlainText();
-        float num2 = val2.toFloat(&esNumero);
-        if(esNumero){
-            union Code a = conver.floattoIEE(num1);
-            IEEHEX(a, 1);
-            union Code b = conver.floattoIEE(num2);
-            IEEHEX(b, 2);
-            bitset<1> signA(a.bitfield.sign);
-            bitset<1> signB(b.bitfield.sign);
-            bitset<8> expA(a.bitfield.expo);
-            bitset<8> expB(b.bitfield.expo);
+        if (esNumero) {
+            QString val2 = ui->textOp2Real->toPlainText();
+            float num2 = val2.toFloat(&esNumero);
+            if(esNumero){
+                union Code a = conver.floattoIEE(num1);
+                IEEHEX(a, 1);
+                union Code b = conver.floattoIEE(num2);
+                IEEHEX(b, 2);
 
-            int* bin = reinterpret_cast<int*>(&a.numero); //repre binaria del float
-            bitset<32> bits(*bin);
-            bitset<24> mantisaA;
-            for(int i = 0; i < 24; i++){
-                mantisaA[i] = bits[i];
+                union Code result = alu.division(a, b);
+
+                bitset<1> sign(result.bitfield.sign);
+                bitset<8> exp(result.bitfield.expo);
+                bitset<23> frac(result.bitfield.partFrac);
+
+                bitset<32> resultado((sign.to_ulong() << 31) | (exp.to_ulong() << 23) | frac.to_ulong());
+
+                string re = resultado.to_string();
+                ui->textBi->setText(QString::fromStdString(re));
+
+                REALHEX(result);
+
+
+            }else{
+                if(isinf(num2)){
+                    cout << "inf" << endl; //inf
+                }else{
+                    cout << "mal2" << endl;  //Val mal
+                }
+
             }
-
-            int* bin2 = reinterpret_cast<int*>(&b.numero); //repre binaria del float
-            bitset<32> bits2(*bin2);
-            bitset<24> mantisaB;
-            for(int i = 0; i < 24; i++){
-                mantisaB[i] = bits2[i];
-            }
-
-
-            //Para escalar hay q normalizar?
-            bitset<23> partFrac;   //ReguRegu
-            for(int i = 0; i < 23; i++){
-                partFrac[i] = mantisaA[i];
-            }
-            unsigned int decimal = partFrac.to_ulong();
-            double fraccionario = decimal / std::pow(2, 23);
-            float valor = 1 + fraccionario;
-            std::cout << "El valor fraccionario es: " << valor << std::endl;
-
-
-        }else{
-            if(isinf(num2)){
+        } else {
+            if(isinf(num1)){
                 cout << "inf" << endl; //inf
             }else{
-                cout << "mal2" << endl;  //Val mal
+                cout << "mal" << endl;  //Val mal
             }
-
         }
-    } else {
-        if(isinf(num1)){
-            cout << "inf" << endl; //inf
-        }else{
-            cout << "mal" << endl;  //Val mal
-        }
-    }
 
 }

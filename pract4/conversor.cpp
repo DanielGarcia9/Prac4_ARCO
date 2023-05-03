@@ -42,23 +42,18 @@ void Conversor::floattoIEE2 (){
 
 }
 
-void Conversor::IEEtofloat (){
+/*void Conversor::IEEtofloat (union Code a){
 
-    union Code a;
-    int b, c, d;
-    printf ("Introduce el signo: ");
-    scanf ("%d", &b);
-    printf ("Introduce el exponente: ");
-    scanf ("%d", &c);
-    printf ("Introduce la mantisa: ");
-    scanf ("%d", &d);
+    bitset<1> b(a.bitfield.sign);
+    bitset<8> c(a.bitfield.expo);
+    bitset<23> d(a.bitfield.partFrac);
 
-    a.bitfield.sign = b;
-    a.bitfield.expo = c;
-    a.bitfield.partFrac = d;
+    a.bitfield.sign = b.to_ulong();
+    a.bitfield.expo = c.to_ulong();
+    a.bitfield.partFrac = d.to_ulong();
 
     printf("El número pasado a real es: %f \n", a.numero);
-}
+}*/
 
 void Conversor::IEEtofloat2 (){
 

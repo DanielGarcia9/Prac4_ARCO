@@ -8,7 +8,7 @@ public:
     Conversor();
     union Code floattoIEE (float num);
     void floattoIEE2 ();
-    void IEEtofloat ();
+    void IEEtofloat (union Code a);
     void IEEtofloat2 ();
 };
 
