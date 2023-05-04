@@ -319,7 +319,7 @@ union Code ALU::multiplicacion(union Code a, union Code b){
     //paso 2
     //estan en exceso? si es asi restar 127
     bitset<8> expProd;
-    int aux = expA.to_ulong() + expB.to_ulong() - 127;
+    int aux = expA.to_ulong() + expB.to_ulong() + 127;
 
         expProd = (expA.to_ulong()-127) + (expB.to_ulong()- 127) + 127;
         bitset<24> P(0);
@@ -328,10 +328,23 @@ union Code ALU::multiplicacion(union Code a, union Code b){
             if (mantisaA[0] == 1){
                 c = 0;
                 for (int i = 0; i < 24; i++) {
+                        bool bit_P = P[i];
+                        bool bit_B = mantisaB[i];
+                        bool temp_result = bit_P ^ bit_B ^ c;
+                        P[i] = temp_result;
+                        c = (bit_P & bit_B) | (bit_P & c) | (bit_B & c);
+                }
+
+                if (c) {
+                    P.set(23, true); // Establecer el bit más significativo de P en 1
+                }
+                /*
+                for (int i = 0; i < 24; i++) {
                     int suma = P[i] + mantisaB[i] + c;
                     P[i] = suma % 2;
                     c = suma / 2;
                 }
+                */
             }else {
                 //P = P + 0?
             }
@@ -401,9 +414,14 @@ union Code ALU::multiplicacion(union Code a, union Code b){
                 expProd = 0;
             }
         }
+        float op1 = a.numero;
+        float op2 = b.numero;
+        bool is_denormalOp1 = (op1 != 0.0) && (op1 < 1.1754944e-38) && ((*(int*)&op1 & 0x7F800000) == 0);
+        bool is_denormalOp2 = (op2 != 0.0) && (op2 < 1.1754944e-38) && ((*(int*)&op2 & 0x7F800000) == 0);
+
 
         //operandos denormales
-        //if(alguno es denormal){
+        //if(is_denormal){
         /*if (expProd.to_ulong() > expMin){
             int t1 = expProd.to_ulong() - expMin;
             int t2 = 0;//numero de bits desplazar (P,A) hacia izq para que sea normalizada
