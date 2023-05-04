@@ -417,7 +417,7 @@ union Code ALU::multiplicacion(union Code a, union Code b){
 
 union Code ALU::restar(union Code a, union Code b)
 {
-    b.bitfield.sign = 1;
+    this->negate (b);
     return this->suma (a,b);
 }
 
@@ -456,7 +456,7 @@ union Code ALU::division(union Code a, union Code b)
 
         bitset<23> partFracB;
         for(int i = 0; i < 23; i++){
-            partFracB[i] = mantisaA[i];
+            partFracB[i] = mantisaB[i];
         }
         unsigned int decimalB = partFracB.to_ulong();
         double fraccionarioB = decimalB / std::pow(2, 23);
@@ -464,11 +464,12 @@ union Code ALU::division(union Code a, union Code b)
         std::cout << "El valor fraccionario de B es: " << valorB << std::endl;
 
         float Bprima;
-        if (valorB > 1 && valorB < 1.25) {
+        if (valorB >= 1 && valorB < 1.25) {
             Bprima = 1;
-        }else if (valorB > 1.25 && valorB < 2){
+        }else if (valorB >= 1.25 && valorB < 2){
             Bprima = 0.8;
         }
+        cout << "B PRIMA VALE " << Bprima <<endl;
 
         union Code A = conver.floattoIEE(valorA);
 
@@ -486,21 +487,31 @@ union Code ALU::division(union Code a, union Code b)
         union Code auxY;
         union Code auxX;
         union Code resultado;
+        union Code resultado2;
         union Code val = conver.floattoIEE(2);
+        float num;
 
         while (1){
-
+            cout << "El numero X es"<<X.numero << endl;
+            cout << "El numero Y es"<<Y.numero << endl;
             R = this->restar (val,Y);
+            cout << "El numero R es"<<R.numero << endl;
             auxY = this->multiplicacion (Y,R);
+            cout << "El numero AUX X es"<<auxX.numero << endl;
             auxX = this->multiplicacion (X,R);
+            cout << "El numero AUX Y es"<<auxY.numero << endl;
             resultado = this->restar(auxX,X);
-            float num = resultado.numero;
+            resultado2 = this->positive (resultado);
+            num = conver.IEEtofloat (resultado2);
+            cout << "El numero float es"<<num << endl;
 
             if (num < 0.0001){
                 break;
+            }else{
+                X = auxX;
+                Y = auxY;
             }
-            X = auxX;
-            Y = auxY;
+
         }
 
         bitset<1> signDiv;
@@ -513,7 +524,7 @@ union Code ALU::division(union Code a, union Code b)
 
         bitset<8> expDiv;
 
-        expDiv = expA.to_ulong ()- expB.to_ulong ()+ expo.to_ulong ();
+        expDiv = expA.to_ulong () - expB.to_ulong () + expo.to_ulong ();
 
         union Code res;
         res.bitfield.sign = signDiv.to_ulong();
@@ -525,6 +536,56 @@ union Code ALU::division(union Code a, union Code b)
         return res;
 
 }
+
+union Code ALU::negate(union Code num) {
+    union Code neg;
+
+    if (num.bitfield.expo == 255 && num.bitfield.partFrac != 0) {
+        // el número original es NaN, mantener el mismo valor
+        neg = num;
+    } else if (num.bitfield.expo == 255 && num.bitfield.partFrac == 0) {
+        // el número original es infinito, cambiar el signo
+        neg.bitfield.partFrac = 0;
+        neg.bitfield.expo = 255;
+        neg.bitfield.sign = 1;
+    } else if (num.bitfield.expo == 0 && num.bitfield.partFrac == 0) {
+        // el número original es cero, no se puede obtener su negativo
+        neg = num;
+    } else {
+        // el número original es finito, cambiar el signo
+        neg.bitfield.partFrac = num.bitfield.partFrac;
+        neg.bitfield.expo = num.bitfield.expo;
+        neg.bitfield.sign = 1 - num.bitfield.sign;
+    }
+
+    return neg;
+}
+
+union Code ALU::positive(union Code num) {
+    union Code pos;
+
+    if (num.bitfield.expo == 255 && num.bitfield.partFrac != 0) {
+        // el número original es NaN, mantener el mismo valor
+        pos = num;
+    } else if (num.bitfield.expo == 255 && num.bitfield.partFrac == 0) {
+        // el número original es infinito, cambiar el signo
+        pos.bitfield.partFrac = 0;
+        pos.bitfield.expo = 255;
+        pos.bitfield.sign = 0;
+    } else if (num.bitfield.expo == 0 && num.bitfield.partFrac == 0) {
+        // el número original es cero, no se puede obtener su positivo
+        pos = num;
+    } else {
+        // el número original es finito, cambiar el signo
+        pos.bitfield.partFrac = num.bitfield.partFrac;
+        pos.bitfield.expo = num.bitfield.expo;
+        pos.bitfield.sign = 0;
+    }
+
+    return pos;
+}
+
+
 
 
 
