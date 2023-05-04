@@ -41,46 +41,99 @@ void MainWindow::on_pushPlus_clicked() //SUMA
 {
 
     QString val1 = ui->textOp1Real->toPlainText();
+    QString val2 = ui->textOp2Real->toPlainText();
 
     bool esNumero = false;
+    bool esNumero2 = false;
     float num1 = val1.toFloat(&esNumero);
+    float num2 = val2.toFloat(&esNumero2);
 
-    if (esNumero) {
-        QString val2 = ui->textOp2Real->toPlainText();
-        float num2 = val2.toFloat(&esNumero);
-        if(esNumero){
-            union Code a = conver.floattoIEE(num1);
-            union Code b = conver.floattoIEE(num2);
-            IEEHEX(a, 1);
-            IEEHEX(b, 2);
+    if (esNumero && esNumero2) {
+        union Code a = conver.floattoIEE(num1);
+        union Code b = conver.floattoIEE(num2);
+        IEEHEX(a, 1);
+        IEEHEX(b, 2);
 
-            union Code result = alu.suma(a, b);
+        union Code result = alu.suma(a, b);
 
-            bitset<1> sign(result.bitfield.sign);
-            bitset<8> exp(result.bitfield.expo);
-            bitset<23> frac(result.bitfield.partFrac);
+        bitset<1> sign(result.bitfield.sign);
+        bitset<8> exp(result.bitfield.expo);
+        bitset<23> frac(result.bitfield.partFrac);
 
-            bitset<32> resultado((sign.to_ulong() << 31) | (exp.to_ulong() << 23) | frac.to_ulong());
+        bitset<32> resultado((sign.to_ulong() << 31) | (exp.to_ulong() << 23) | frac.to_ulong());
 
-            string re = resultado.to_string();
-            ui->textBi->setText(QString::fromStdString(re));
+        string re = resultado.to_string();
+        ui->textBi->setText(QString::fromStdString(re));
 
-            REALHEX(result);
+        REALHEX(result);
 
-                cout << resultado << endl;      //FUNCIONAN TODAS LAS PRUEBAS MENOS CON E40 y 2E-37
+        cout << resultado << endl;      //FUNCIONAN TODAS LAS PRUEBAS MENOS CON E40 y 2E-37
 
-        }else{
-            if(isinf(num2)){
-                cout << "inf" << endl; //inf
-            }else{
-                cout << "mal2" << endl;  //Val mal
-            }
-        }
     }else{
         if(isinf(num1)){
-            cout << "inf" << endl; //inf
+            if(num1 == -num2){
+                union Code result;
+                result.numero = 0;
+
+                bitset<1> sign(result.bitfield.sign);
+                bitset<8> exp(result.bitfield.expo);
+                bitset<23> frac(result.bitfield.partFrac);
+
+                bitset<32> resultado((sign.to_ulong() << 31) | (exp.to_ulong() << 23) | frac.to_ulong());
+
+                string re = resultado.to_string();
+                ui->textBi->setText(QString::fromStdString(re));
+
+                REALHEX(result);
+
+            }else{
+                ui->textBi->setText("01111111100000000000000000000000");
+                union Code res;
+                if(num1 < 0){
+                    res.bitfield.sign = 1;
+                    ui->textBi->setText("11111111100000000000000000000000");
+                }else{
+                    res.bitfield.sign = 0;
+                    ui->textBi->setText("01111111100000000000000000000000");
+                }
+                res.bitfield.expo = 255;
+                res.bitfield.partFrac = 0;
+                cout << res.bitfield.sign << endl;
+                REALHEX(res);
+            }
+        }else if(isinf(num2)){
+            if(num2 == -num1){
+                union Code result;
+                result.numero = 0;
+
+                bitset<1> sign(result.bitfield.sign);
+                bitset<8> exp(result.bitfield.expo);
+                bitset<23> frac(result.bitfield.partFrac);
+
+                bitset<32> resultado((sign.to_ulong() << 31) | (exp.to_ulong() << 23) | frac.to_ulong());
+
+                string re = resultado.to_string();
+                ui->textBi->setText(QString::fromStdString(re));
+
+                REALHEX(result);
+
+            }else{
+                ui->textBi->setText("01111111100000000000000000000000");
+                union Code res;
+                if(num2 < 0){
+                    res.bitfield.sign = 1;
+                    ui->textBi->setText("11111111100000000000000000000000");
+                }else{
+                    res.bitfield.sign = 0;
+                    ui->textBi->setText("01111111100000000000000000000000");
+                }
+                res.bitfield.expo = 255;
+                res.bitfield.partFrac = 0;
+                cout << res.bitfield.sign << endl;
+                REALHEX(res);
+            }
         }else{
-            cout << "mal" << endl;  //Val mal
+            cout << "Valores incorrecto" << endl;  //Val mal
         }
     }
 }

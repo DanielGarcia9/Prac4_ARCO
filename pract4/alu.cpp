@@ -25,6 +25,17 @@ Conversor conver;
 }
 
 union Code ALU::suma(union Code a, union Code b){
+    bool denormA = false;
+    bool denormB = false;
+
+    if(a.bitfield.expo <= 0 ){
+        a.bitfield.expo = 1;
+        denormA = true;
+    }
+    if(b.bitfield.expo <= 0){
+        b.bitfield.expo = 1;
+        denormB = true;
+    }
     bitset<1> signA(a.bitfield.sign);
     bitset<1> signB(b.bitfield.sign);
     bitset<8> expA(a.bitfield.expo);
@@ -33,16 +44,29 @@ union Code ALU::suma(union Code a, union Code b){
     int* bin = reinterpret_cast<int*>(&a.numero); //repre binaria del float
     bitset<32> bits(*bin);
     bitset<24> mantisaA;
-    for(int i = 0; i < 24; i++){
+    for(int i = 0; i < 23; i++){
         mantisaA[i] = bits[i];
     }
+    if(denormA){
+        mantisaA[23] = 0;
+    }else{
+        mantisaA[23] = 1;
+    }
+
 
     int* bin2 = reinterpret_cast<int*>(&b.numero); //repre binaria del float
     bitset<32> bits2(*bin2);
     bitset<24> mantisaB;
-    for(int i = 0; i < 24; i++){
+    for(int i = 0; i < 23; i++){
         mantisaB[i] = bits2[i];
     }
+    if(denormB){
+        mantisaB[23] = 0;
+    }else{
+        mantisaB[23] = 1;
+    }
+
+
 
     if(signA != signB && expA == expB && mantisaA == mantisaB){
         union Code res;
@@ -142,7 +166,7 @@ union Code ALU::suma(union Code a, union Code b){
             cout << expSuma << endl;
             expSuma = expSuma.to_ulong() + 1;
             cout << expSuma << endl;
-        }else {                                             //1E-37 + 1E-37 deberia ser exponente 5
+        }else {
             cout << P << endl;
             int k = 0;//numero de bits desplazar p para que sea mantisa normalizada, matisa normalizada tiene unicamente 24 bits y empieza por 1
             for (int i = 23; i >= 0; i--) {
@@ -152,7 +176,7 @@ union Code ALU::suma(union Code a, union Code b){
                 }
                 k++;
             }
-            cout << "K " << k << endl;   //Algo sigue estando mal
+            cout << "K " << k << endl;
             if (k == 0){
                 st = r | st;
                 r = g;
@@ -191,14 +215,32 @@ union Code ALU::suma(union Code a, union Code b){
             }
 
         }
+
+
         cout << expSuma << endl;
         bitset<24> mantSuma = P;
         bitset<1> signSuma;
+
+
         if (opIntercambiados == false && complemP == true){
               signSuma = signB;
         }else {
               signSuma = signA;
         }
+
+        if(denormA || denormB){
+            cout << "entra" << endl;
+            union Code res;
+            res.bitfield.sign = signSuma.to_ulong();
+            res.bitfield.expo = 1;
+            bitset<23> frac;
+            for(int i = 0; i < 23; i++){
+                frac[i] = mantSuma[i];
+            }
+            res.bitfield.partFrac = frac.to_ulong();
+            return res;
+        }
+
         cout << mantSuma << endl;
         bitset<32> resultado;
         for(int i = 0; i < 23; i++){
