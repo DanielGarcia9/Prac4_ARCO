@@ -267,25 +267,46 @@ union Code ALU::suma(union Code a, union Code b){
 
 
 union Code ALU::multiplicacion(union Code a, union Code b){
+    bool denormA = false;
+    bool denormB = false;
+    int n = 24;
+
+    if(a.bitfield.expo <= 0 ){
+        a.bitfield.expo = 1;
+        denormA = true;
+    }
+    if(b.bitfield.expo <= 0){
+        b.bitfield.expo = 1;
+        denormB = true;
+    }
     bitset<1> signA(a.bitfield.sign);
     bitset<1> signB(b.bitfield.sign);
     bitset<8> expA(a.bitfield.expo);
     bitset<8> expB(b.bitfield.expo);
 
-    int n = 24;
-
     int* bin = reinterpret_cast<int*>(&a.numero); //repre binaria del float
     bitset<32> bits(*bin);
     bitset<24> mantisaA;
-    for(int i = 0; i < 24; i++){
+    for(int i = 0; i < 23; i++){
         mantisaA[i] = bits[i];
     }
+    if(denormA){
+        mantisaA[23] = 0;
+    }else{
+        mantisaA[23] = 1;
+    }
+
 
     int* bin2 = reinterpret_cast<int*>(&b.numero); //repre binaria del float
     bitset<32> bits2(*bin2);
     bitset<24> mantisaB;
-    for(int i = 0; i < 24; i++){
+    for(int i = 0; i < 23; i++){
         mantisaB[i] = bits2[i];
+    }
+    if(denormB){
+        mantisaB[23] = 0;
+    }else{
+        mantisaB[23] = 1;
     }
 
     //paso 1
@@ -299,9 +320,7 @@ union Code ALU::multiplicacion(union Code a, union Code b){
     //estan en exceso? si es asi restar 127
     bitset<8> expProd;
     int aux = expA.to_ulong() + expB.to_ulong() - 127;
-    if(aux > 255){
-        cout << "El numero es infinito" << endl;
-    }else{
+
         expProd = (expA.to_ulong()-127) + (expB.to_ulong()- 127) + 127;
         bitset<24> P(0);
         int c = 0;
@@ -353,31 +372,38 @@ union Code ALU::multiplicacion(union Code a, union Code b){
         }
         //desbordamientos
         int expMax= 255;
-        int expMin= 1;
-        if (expProd.to_ulong() > expMax){
-            //overflow
+        int expMin= 0;
 
-        }else {
-            if (expProd.to_ulong() < expMin){
-                int t = expMin - expProd.to_ulong();
-                if (t >= 24){
-                    //underflow
-                    cout << "Not a number, not enought bits to show the number" << endl;
-                }else {
-                    //desplazar (P,A) t bits derecha
-                    bitset<1> aux;
-                    aux[0] = mantisaA[23];
+        if(aux >= expMax){
+            union Code res;
+            res.bitfield.sign = signProd.to_ulong();
+            res.bitfield.expo = 255;
+            res.bitfield.partFrac = 0;
+            return res;
+        }else if(aux <= expMin){
+            int t = expMin - aux;
+            if (t >= 24){
+                //underflow
+                union Code nan;
+                nan.bitfield.partFrac = 1;
+                nan.bitfield.expo = 255;
+                return nan;
+            }else{
+                cout << "hola" << endl;
+                bitset<1> aux;
+                aux[0] = mantisaA[23];
 
-                    PA >>= t;
-                  // Colocar los bits de A en P a partir de la posición pos
-                    for(int i = 0; i < t; i++){
-                        PA[23-i] = aux[0];
-                    }
-                    expProd = expMin;
+                PA >>= t;
+                // Colocar los bits de A en P a partir de la posición pos
+                for(int i = 0; i < t; i++){
+                    PA[23-i] = aux[0];
                 }
+                expProd = 0;
             }
         }
+
         //operandos denormales
+        //if(alguno es denormal){
         /*if (expProd.to_ulong() > expMin){
             int t1 = expProd.to_ulong() - expMin;
             int t2 = 0;//numero de bits desplazar (P,A) hacia izq para que sea normalizada
@@ -395,10 +421,11 @@ union Code ALU::multiplicacion(union Code a, union Code b){
         }else if(expProd.to_ulong() == expMin) {
             //resultado un denormal directamente
 
-        }*/
+        }
         //tener en cuenta operandos 0
         //0 x n = 0
         //0 x +-infinito = indeterminacion(NaN)
+        */
         bitset<23> mP;
         for(int i = 0; i < 23; i++){
             mP[22 - i] = PA[46-i];
@@ -411,7 +438,6 @@ union Code ALU::multiplicacion(union Code a, union Code b){
         cout << signProd << expProd << mP << endl;
 
         return res;
-    }
 
 }
 
