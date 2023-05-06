@@ -228,7 +228,7 @@ void MainWindow::on_pushMult_clicked() //mult
             b.bitfield.expo = 255;
             b.bitfield.partFrac = 0;
             IEEHEX(b, 2);
-        }else{
+        }else if (num2 == 0 && isinf(num1)){
             union Code a = conver.floattoIEE(num2);
             IEEHEX(a, 2);
             union Code b;

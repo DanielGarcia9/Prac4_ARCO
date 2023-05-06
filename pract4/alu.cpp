@@ -421,29 +421,33 @@ union Code ALU::multiplicacion(union Code a, union Code b){
 
 
         //operandos denormales
-        //if(is_denormal){
-        /*if (expProd.to_ulong() > expMin){
-            int t1 = expProd.to_ulong() - expMin;
-            int t2 = 0;//numero de bits desplazar (P,A) hacia izq para que sea normalizada
-            for (int i = 23; i >= 0; i--) {
-                if (P[i] == 1) {
-                    break;
-                }
-                t2++;
+        if(is_denormalOp1 || is_denormalOp2){
+
+            if (expProd.to_ulong () < expMin){
+                cout << "Not a number" << endl;
             }
-            int t = min(t1,t2);
-            expProd = expProd.to_ulong() - t;
-            //desplazar (P,A) t bits izq    ARITMETICAMENTE??
-            PA <<= t;
+            if (expProd.to_ulong() > expMin){
+                int t1 = expProd.to_ulong() - expMin;
+                int t2 = 0;//numero de bits desplazar (P,A) hacia izq para que sea normalizada
+                for (int i = 23; i >= 0; i--) {
+                    if (P[i] == 1) {
+                        break;
+                    }
+                    t2++;
+                }
+                int t = min(t1,t2);
+                expProd = expProd.to_ulong() - t;
+                //desplazar (P,A) t bits izq    ARITMETICAMENTE??
+                PA <<= t;
 
-        }else if(expProd.to_ulong() == expMin) {
-            //resultado un denormal directamente
+            }else {
+                //resultado un denormal directamente
+                cout << "hay un operando denormal"<<endl;
 
+            }
         }
-        //tener en cuenta operandos 0
-        //0 x n = 0
-        //0 x +-infinito = indeterminacion(NaN)
-        */
+
+
         bitset<23> mP;
         for(int i = 0; i < 23; i++){
             mP[22 - i] = PA[46-i];
