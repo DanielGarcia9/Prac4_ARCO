@@ -354,49 +354,40 @@ void MainWindow::on_pushMult_clicked() //mult
 
 void MainWindow::on_pushDiv_clicked()
 {
-    Conversor conver;
-        QString val1 = ui->textOp1Real->toPlainText();
 
-        bool esNumero = false;
-        float num1 = val1.toFloat(&esNumero);
+    QString val1 = ui->textOp1Real->toPlainText();
+    QString val2 = ui->textOp2Real->toPlainText();
 
-        if (esNumero) {
-            QString val2 = ui->textOp2Real->toPlainText();
-            float num2 = val2.toFloat(&esNumero);
-            if(esNumero){
-                union Code a = conver.floattoIEE(num1);
-                IEEHEX(a, 1);
-                union Code b = conver.floattoIEE(num2);
-                IEEHEX(b, 2);
+    bool esNumero = false;
+    bool esNumero2 = false;
+    float num1 = val1.toFloat(&esNumero);
+    float num2 = val2.toFloat(&esNumero2);
 
-                union Code result = alu.division(a, b);
+    if (esNumero && esNumero2) {
+        union Code a = conver.floattoIEE(num1);
+        union Code b = conver.floattoIEE(num2);
+        IEEHEX(a, 1);
+        IEEHEX(b, 2);
 
-                bitset<1> sign(result.bitfield.sign);
-                bitset<8> exp(result.bitfield.expo);
-                bitset<23> frac(result.bitfield.partFrac);
+        union Code result = alu.division(a, b);
 
-                bitset<32> resultado((sign.to_ulong() << 31) | (exp.to_ulong() << 23) | frac.to_ulong());
+        bitset<1> sign(result.bitfield.sign);
+        bitset<8> exp(result.bitfield.expo);
+        bitset<23> frac(result.bitfield.partFrac);
 
-                string re = resultado.to_string();
-                ui->textBi->setText(QString::fromStdString(re));
+        bitset<32> resultado((sign.to_ulong() << 31) | (exp.to_ulong() << 23) | frac.to_ulong());
 
-                REALHEX(result);
+        string re = resultado.to_string();
+        ui->textBi->setText(QString::fromStdString(re));
 
+        REALHEX(result);
 
-            }else{
-                if(isinf(num2)){
-                    cout << "inf" << endl; //inf
-                }else{
-                    cout << "mal2" << endl;  //Val mal
-                }
+    }else{
+        if(false){
 
-            }
-        } else {
-            if(isinf(num1)){
-                cout << "inf" << endl; //inf
-            }else{
-                cout << "mal" << endl;  //Val mal
-            }
+        }else{
+            cout << "Valores incorrecto" << endl;  //Val mal
         }
+    }
 
 }

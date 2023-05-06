@@ -124,7 +124,6 @@ union Code ALU::suma(union Code a, union Code b){
                 st[0] = st[0] | P[aux];
             }
         }
-        cout << "D " << d << endl;
 
         if(signA != signB){
             //desplazar los ultimos
@@ -165,9 +164,7 @@ union Code ALU::suma(union Code a, union Code b){
             P[23] = acarreo;
             cout << expSuma << endl;
             expSuma = expSuma.to_ulong() + 1;
-            cout << expSuma << endl;
         }else {
-            cout << P << endl;
             int k = 0;//numero de bits desplazar p para que sea mantisa normalizada, matisa normalizada tiene unicamente 24 bits y empieza por 1
             for (int i = 23; i >= 0; i--) {
                 if (P[i] == 1) {
@@ -176,7 +173,6 @@ union Code ALU::suma(union Code a, union Code b){
                 }
                 k++;
             }
-            cout << "K " << k << endl;
             if (k == 0){
                 st = r | st;
                 r = g;
@@ -186,7 +182,6 @@ union Code ALU::suma(union Code a, union Code b){
             }
             k--;
             P <<= k;
-            cout << "g " << g << endl;
             for (int i = 0; i < k; i++){
                 //desplazar p y g a la izq k bits
                 P[i] = g[0];
@@ -198,7 +193,6 @@ union Code ALU::suma(union Code a, union Code b){
         }
 
         if ((r[0] == 1 && st[0] == 1) || (r[0] == 1 && st[0] == 0 && P[0]==1)){
-            cout << "entra" << endl;
             int acarreo2 = 0;
             if(P[0] == 1){
                 acarreo2 = 1;
@@ -229,7 +223,6 @@ union Code ALU::suma(union Code a, union Code b){
         }
 
         if(denormA || denormB){
-            cout << "entra" << endl;
             union Code res;
             res.bitfield.sign = signSuma.to_ulong();
             res.bitfield.expo = 1;
@@ -347,218 +340,265 @@ union Code ALU::multiplicacion(union Code a, union Code b){
 
     }
 
-        bitset<48> PA;
+    bitset<48> PA;
 
-        PA = (P.to_ulong() << 24) | mantisaA.to_ulong();
-
-
-        cout << PA << endl;
-        if (PA[47] == 0){
-            PA <<= 1;
-        }else {
-            expProd = expProd.to_ulong() + 1;
-        }
+    PA = (P.to_ulong() << 24) | mantisaA.to_ulong();
 
 
-        bitset<1> r;
-        r[0] = mantisaA[n-1];//bit redondeo
-
-        bitset<1> st = 0;//Bit sticky
-        for (int i = n - 2; i >= 0; i--) {
-            st[0] = st[0] | mantisaA[i];
-        }
-
-        if ((r[0] == 1 && st[0] == 1) || (r[0] == 1 && st[0] == 0 && P[0] == 1)){
-            P = P.to_ulong() + 1;
-        }
-        //desbordamientos
-        int expMax= 255;
-        int expMin= 0;
-
-        if(aux >= expMax){
-            union Code res;
-            res.bitfield.sign = signProd.to_ulong();
-            res.bitfield.expo = 255;
-            res.bitfield.partFrac = 0;
-            return res;
-        }else if(aux <= expMin){
-            int t = expMin - aux;
-            if (t >= 24){
-                //underflow
-                union Code nan;
-                nan.bitfield.partFrac = 1;
-                nan.bitfield.expo = 255;
-                return nan;
-            }else{
-                bitset<1> aux;
-                aux[0] = mantisaA[23];
-
-                PA >>= t;
-                // Colocar los bits de A en P a partir de la posición pos
-                for(int i = 0; i < t; i++){
-                    PA[23-i] = aux[0];
-                }
-                expProd = 0;
-            }
-        }
-        float op1 = a.numero;
-        float op2 = b.numero;
-        bool is_denormalOp1 = (op1 != 0.0) && (op1 < 1.1754944e-38) && ((*(int*)&op1 & 0x7F800000) == 0);
-        bool is_denormalOp2 = (op2 != 0.0) && (op2 < 1.1754944e-38) && ((*(int*)&op2 & 0x7F800000) == 0);
+    cout << PA << endl;
+    if (PA[47] == 0){
+        PA <<= 1;
+    }else {
+        expProd = expProd.to_ulong() + 1;
+    }
 
 
-        //operandos denormales
-        if(is_denormalOp1 || is_denormalOp2){
+    bitset<1> r;
+    r[0] = mantisaA[n-1];//bit redondeo
 
-            if (expProd.to_ulong () < expMin){
-                cout << "Not a number" << endl;
-            }
-            if (expProd.to_ulong() > expMin){
-                int t1 = expProd.to_ulong() - expMin;
-                int t2 = 0;//numero de bits desplazar (P,A) hacia izq para que sea normalizada
-                for (int i = 23; i >= 0; i--) {
-                    if (P[i] == 1) {
-                        break;
-                    }
-                    t2++;
-                }
-                int t = min(t1,t2);
-                expProd = expProd.to_ulong() - t;
-                //desplazar (P,A) t bits izq    ARITMETICAMENTE??
-                PA <<= t;
+    bitset<1> st = 0;//Bit sticky
+    for (int i = n - 2; i >= 0; i--) {
+        st[0] = st[0] | mantisaA[i];
+    }
 
-            }else {
-                //resultado un denormal directamente
-                cout << "hay un operando denormal"<<endl;
+    if ((r[0] == 1 && st[0] == 1) || (r[0] == 1 && st[0] == 0 && P[0] == 1)){
+        P = P.to_ulong() + 1;
+    }
+    //desbordamientos
+    int expMax= 255;
+    int expMin= 0;
 
-            }
-        }
-
-
-        bitset<23> mP;
-        for(int i = 0; i < 23; i++){
-            mP[22 - i] = PA[46-i];
-        }
+    if(aux >= expMax){
         union Code res;
         res.bitfield.sign = signProd.to_ulong();
-        res.bitfield.expo = expProd.to_ulong();
-        res.bitfield.partFrac = mP.to_ulong();
-
-        cout << signProd << expProd << mP << endl;
-
+        res.bitfield.expo = 255;
+        res.bitfield.partFrac = 0;
         return res;
+    }else if(aux <= expMin){
+        int t = expMin - aux;
+        if (t >= 24){
+            //underflow
+            union Code nan;
+            nan.bitfield.partFrac = 1;
+            nan.bitfield.expo = 255;
+            return nan;
+        }else{
+            bitset<1> aux;
+            aux[0] = mantisaA[23];
+
+            PA >>= t;
+            // Colocar los bits de A en P a partir de la posición pos
+            for(int i = 0; i < t; i++){
+                PA[23-i] = aux[0];
+            }
+            expProd = 0;
+        }
+    }
+    float op1 = a.numero;
+    float op2 = b.numero;
+    bool is_denormalOp1 = (op1 != 0.0) && (op1 < 1.1754944e-38) && ((*(int*)&op1 & 0x7F800000) == 0);
+    bool is_denormalOp2 = (op2 != 0.0) && (op2 < 1.1754944e-38) && ((*(int*)&op2 & 0x7F800000) == 0);
+
+
+    //operandos denormales
+    if(is_denormalOp1 || is_denormalOp2){
+
+        if (expProd.to_ulong () < expMin){
+            cout << "Not a number" << endl;
+        }
+        if (expProd.to_ulong() > expMin){
+            int t1 = expProd.to_ulong() - expMin;
+            int t2 = 0;//numero de bits desplazar (P,A) hacia izq para que sea normalizada
+            for (int i = 23; i >= 0; i--) {
+                if (P[i] == 1) {
+                    break;
+                }
+                t2++;
+            }
+            int t = min(t1,t2);
+            expProd = expProd.to_ulong() - t;
+            //desplazar (P,A) t bits izq    ARITMETICAMENTE??
+            PA <<= t;
+
+        }else {
+            //resultado un denormal directamente
+            cout << "hay un operando denormal"<<endl;
+
+        }
+    }
+
+
+    bitset<23> mP;
+    for(int i = 0; i < 23; i++){
+        mP[22 - i] = PA[46-i];
+    }
+    union Code res;
+    res.bitfield.sign = signProd.to_ulong();
+    res.bitfield.expo = expProd.to_ulong();
+    res.bitfield.partFrac = mP.to_ulong();
+
+    return res;
 
 }
 
 union Code ALU::restar(union Code a, union Code b)
 {
-    this->negate (b);
+    if(b.bitfield.sign == 0){
+        b.bitfield.sign = 1;
+    }else{
+        b.bitfield.sign = 0;
+    }
+    //this->negate (b);
     return this->suma (a,b);
 }
 
 union Code ALU::division(union Code a, union Code b)
 {
-        Conversor conver;
+    if(a.numero == 0 && b.numero != 0){
+        union Code res;
+        res.bitfield.expo = 0;
+        res.bitfield.partFrac = 0;
+        res.bitfield.sign = 0;
+        return res;
+    }
+    if(a.numero != 0 && b.numero == 0  || a.numero == 0 && b.numero == 0){
+        union Code nan;
+        nan.bitfield.sign = 0;
+        nan.bitfield.partFrac = 1;
+        nan.bitfield.expo = 255;
+        return nan;
+    }
+    if(a.numero == b.numero || a.numero == -b.numero){
+        union Code res;
+        res.bitfield.expo = 127;
+        res.bitfield.partFrac = 0;
+        if(a.bitfield.sign == b.bitfield.sign){
+            res.bitfield.sign = 0;
+        }else{
+            res.bitfield.sign = 1;
+        }
+        return res;
+    }
+    Conversor conver;
+    bool denormA = false;
+    bool denormB = false;
+    int n = 24;
 
-        bitset<1> signA(a.bitfield.sign);
-        bitset<1> signB(b.bitfield.sign);
-        bitset<8> expA(a.bitfield.expo);
-        bitset<8> expB(b.bitfield.expo);
+    if(a.bitfield.expo <= 0 ){
+        a.bitfield.expo = 1;
+        denormA = true;
+    }
+    if(b.bitfield.expo <= 0){
+        b.bitfield.expo = 1;
+        denormB = true;
+    }
+    bitset<1> signA(a.bitfield.sign);
+    bitset<1> signB(b.bitfield.sign);
+    bitset<8> expA(a.bitfield.expo);
+    bitset<8> expB(b.bitfield.expo);
 
-        int* bin = reinterpret_cast<int*>(&a.numero); //repre binaria del float
-        bitset<32> bits(*bin);
-        bitset<24> mantisaA;
-        for(int i = 0; i < 24; i++){
-            mantisaA[i] = bits[i];
+    int* bin = reinterpret_cast<int*>(&a.numero); //repre binaria del float
+    bitset<32> bits(*bin);
+    bitset<24> mantisaA;
+    for(int i = 0; i < 23; i++){
+        mantisaA[i] = bits[i];
+    }
+    if(denormA){
+        mantisaA[23] = 0;
+    }else{
+        mantisaA[23] = 1;
+    }
+
+
+    int* bin2 = reinterpret_cast<int*>(&b.numero); //repre binaria del float
+    bitset<32> bits2(*bin2);
+    bitset<24> mantisaB;
+    for(int i = 0; i < 23; i++){
+        mantisaB[i] = bits2[i];
+    }
+    if(denormB){
+        mantisaB[23] = 0;
+    }else{
+        mantisaB[23] = 1;
+    }
+
+    bitset<23> partFracA;
+    for(int i = 0; i < 23; i++){
+        partFracA[i] = mantisaA[i];
+    }
+
+    unsigned int decimalA = partFracA.to_ulong();
+    double fraccionarioA = decimalA / std::pow(2, 23);
+    float valorA = 1 + fraccionarioA;   //Si es denormal??
+    std::cout << "El valor fraccionario de A es: " << valorA << std::endl;
+
+
+    bitset<23> partFracB;
+    for(int i = 0; i < 23; i++){
+        partFracB[i] = mantisaB[i];
+    }
+    cout << mantisaB<<endl;
+    unsigned int decimalB = partFracB.to_ulong();
+    double fraccionarioB = decimalB / std::pow(2, 23);
+    float valorB = 1 + fraccionarioB;
+    std::cout << "El valor fraccionario de B es: " << valorB << std::endl;
+
+    float Bprima;
+    if (valorB >= 1 && valorB < 1.25) {
+        Bprima = 1;
+    }else if (valorB >= 1.25 && valorB < 2){
+        Bprima = 0.8;
+    }
+    cout << "B PRIMA VALE " << Bprima <<endl;
+
+    union Code A = conver.floattoIEE(valorA);
+    union Code B = conver.floattoIEE(valorB);
+    union Code Bp = conver.floattoIEE(Bprima);
+
+    union Code X = this->multiplicacion(A, Bp);
+
+    union Code Y = this->multiplicacion (B, Bp);
+
+    union Code R;
+    union Code auxY;
+    union Code auxX;
+    union Code resultado;
+    union Code resultado2;
+    union Code val;
+    val.numero = 2;
+    float num;
+
+    while (1){
+        cout << "El numero X es"<<X.numero << endl;
+        cout << "El numero Y es"<<Y.numero << endl;
+        R = this->restar(val,Y);
+        cout << "El numero R es"<<R.numero << endl;
+        auxY = this->multiplicacion (Y,R);
+        cout << "El numero AUX Y es"<<auxY.numero << endl;
+        auxX = this->multiplicacion (X,R);
+        cout << "El numero AUX X es"<<auxX.numero << endl;
+        resultado = this->restar(auxX,X);
+        //resultado2 = this->positive (resultado);
+        num = conver.IEEtofloat (resultado);
+        cout << "El numero float es"<<num << endl;
+
+        if (num > 0.0001){
+            break;
+        }else{
+            X = auxX;
+            Y = auxY;
         }
 
-        int* bin2 = reinterpret_cast<int*>(&b.numero); //repre binaria del float
-        bitset<32> bits2(*bin2);
-        bitset<24> mantisaB;
-        for(int i = 0; i < 24; i++){
-            mantisaB[i] = bits2[i];
-        }
-
-        bitset<23> partFracA;
-        for(int i = 0; i < 23; i++){
-            partFracA[i] = mantisaA[i];
-        }
-        unsigned int decimalA = partFracA.to_ulong();
-        double fraccionarioA = decimalA / std::pow(2, 23);
-        float valorA = 1 + fraccionarioA;
-        std::cout << "El valor fraccionario de A es: " << valorA << std::endl;
-
-
-        bitset<23> partFracB;
-        for(int i = 0; i < 23; i++){
-            partFracB[i] = mantisaB[i];
-        }
-        unsigned int decimalB = partFracB.to_ulong();
-        double fraccionarioB = decimalB / std::pow(2, 23);
-        float valorB = 1 + fraccionarioB;
-        std::cout << "El valor fraccionario de B es: " << valorB << std::endl;
-
-        float Bprima;
-        if (valorB >= 1 && valorB < 1.25) {
-            Bprima = 1;
-        }else if (valorB >= 1.25 && valorB < 2){
-            Bprima = 0.8;
-        }
-        cout << "B PRIMA VALE " << Bprima <<endl;
-
-        union Code A = conver.floattoIEE(valorA);
-
-        union Code B = conver.floattoIEE(valorB);
-
-        union Code Bp = conver.floattoIEE(Bprima);
-
-
-        union Code X = this->multiplicacion (A, Bp);
-
-        union Code Y = this->multiplicacion (B, Bp);
-
-
-        union Code R;
-        union Code auxY;
-        union Code auxX;
-        union Code resultado;
-        union Code resultado2;
-        union Code val = conver.floattoIEE(2);
-        float num;
-
-        while (1){
-            cout << "El numero X es"<<X.numero << endl;
-            cout << "El numero Y es"<<Y.numero << endl;
-            R = this->restar (val,Y);
-            cout << "El numero R es"<<R.numero << endl;
-            auxY = this->multiplicacion (Y,R);
-            cout << "El numero AUX X es"<<auxX.numero << endl;
-            auxX = this->multiplicacion (X,R);
-            cout << "El numero AUX Y es"<<auxY.numero << endl;
-            resultado = this->restar(auxX,X);
-            resultado2 = this->positive (resultado);
-            num = conver.IEEtofloat (resultado2);
-            cout << "El numero float es"<<num << endl;
-
-            if (num < 0.0001){
-                break;
-            }else{
-                X = auxX;
-                Y = auxY;
-            }
-
-        }
-
-        bitset<1> signDiv;
-        signDiv[0] = signA[0] ^ signB[0];
-
+    }
 
         bitset<1> signo(auxX.bitfield.sign);
         bitset<8> expo(auxX.bitfield.expo);
         bitset<23> fracc(auxX.bitfield.partFrac);
 
-        bitset<8> expDiv;
+        bitset<1> signDiv;
+        signDiv[0] = signA[0] ^ signB[0];
 
+        bitset<8> expDiv;
         expDiv = expA.to_ulong () - expB.to_ulong () + expo.to_ulong ();
 
         union Code res;
