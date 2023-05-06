@@ -319,56 +319,44 @@ union Code ALU::multiplicacion(union Code a, union Code b){
     //paso 2
     //estan en exceso? si es asi restar 127
     bitset<8> expProd;
-    int aux = expA.to_ulong() + expB.to_ulong() + 127;
+    int aux = expA.to_ulong() + expB.to_ulong() - 127;
 
-        expProd = (expA.to_ulong()-127) + (expB.to_ulong()- 127) + 127;
-        bitset<24> P(0);
-        int c = 0;
-        for (int i = 0; i < 24; i++){
-            if (mantisaA[0] == 1){
-                c = 0;
-                for (int i = 0; i < 24; i++) {
-                        bool bit_P = P[i];
-                        bool bit_B = mantisaB[i];
-                        bool temp_result = bit_P ^ bit_B ^ c;
-                        P[i] = temp_result;
-                        c = (bit_P & bit_B) | (bit_P & c) | (bit_B & c);
-                }
-
-                if (c) {
-                    P.set(23, true); // Establecer el bit más significativo de P en 1
-                }
-                /*
-                for (int i = 0; i < 24; i++) {
-                    int suma = P[i] + mantisaB[i] + c;
-                    P[i] = suma % 2;
-                    c = suma / 2;
-                }
-                */
-            }else {
-                //P = P + 0?
-            }
-            bitset<1> lastBit;
-            lastBit[0] = P[0];
-            P>>= 1;
-            P[23] = c;
+    expProd = (expA.to_ulong()-127) + (expB.to_ulong()- 127) + 127;
+    bitset<24> P(0);
+    int c = 0;
+    for (int i = 0; i < 24; i++){
+        if (mantisaA[0] == 1){
             c = 0;
-            mantisaA >>= 1;
-            mantisaA[23] = lastBit[0];
 
+            for (int i = 0; i < 24; i++) {
+                int suma = P[i] + mantisaB[i] + c;
+                P[i] = suma % 2;
+                c = suma / 2;
+            }
+
+        }else {
+            //P = P + 0?
         }
+        bitset<1> lastBit;
+        lastBit[0] = P[0];
+        P>>= 1;
+        P[23] = c;
+        c = 0;
+        mantisaA >>= 1;
+        mantisaA[23] = lastBit[0];
+
+    }
 
         bitset<48> PA;
 
         PA = (P.to_ulong() << 24) | mantisaA.to_ulong();
 
 
-
-        if (PA[n-1] == 0){
+        cout << PA << endl;
+        if (PA[47] == 0){
             PA <<= 1;
         }else {
             expProd = expProd.to_ulong() + 1;
-            cout << expProd <<endl;
         }
 
 
@@ -402,7 +390,6 @@ union Code ALU::multiplicacion(union Code a, union Code b){
                 nan.bitfield.expo = 255;
                 return nan;
             }else{
-                cout << "hola" << endl;
                 bitset<1> aux;
                 aux[0] = mantisaA[23];
 
