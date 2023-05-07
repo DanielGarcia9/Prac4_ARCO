@@ -487,7 +487,7 @@ void MainWindow::on_pushDiv_clicked()
 
 
                 }else{
-                    cout << "Valores incorrecto" << endl;  //Val mal
+                    cout << "Valores incorrecto" << endl;
                 }
         }
 

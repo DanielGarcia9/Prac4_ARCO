@@ -29,30 +29,7 @@ union Code Conversor::floattoIEE (float num){
 
 }
 
-
-void Conversor::floattoIEE2 (){
-
-    union Code a;
-    a.numero=2.1;
-    printf("Numero a imprimir: %f \n", a.numero);
-    //printf("Numero unsigned: %u \n", a.numerox);
-    printf("Signo: %u \n",a.bitfield.sign);
-    printf("Exponente: %u \n",a.bitfield.expo);
-    printf("Parte Fraccionaria : %u \n", a.bitfield.partFrac);
-
-}
-
 float Conversor::IEEtofloat (union Code a){
     return a.numero;
 }
 
-void Conversor::IEEtofloat2 (){
-
-    union Code a;
-
-    a.bitfield.partFrac = 4718592;
-    a.bitfield.expo = 131;
-    a.bitfield.sign = 0;
-    printf("El número es: %f \n", a.numero);
-
-}

@@ -162,7 +162,6 @@ union Code ALU::suma(union Code a, union Code b){
 
             P >>= 1;
             P[23] = acarreo;
-            cout << expSuma << endl;
             expSuma = expSuma.to_ulong() + 1;
         }else {
             int k = 0;//numero de bits desplazar p para que sea mantisa normalizada, matisa normalizada tiene unicamente 24 bits y empieza por 1
@@ -186,10 +185,8 @@ union Code ALU::suma(union Code a, union Code b){
                 //desplazar p y g a la izq k bits
                 P[i] = g[0];
             }
-            cout << P << endl;
-            cout << expSuma.to_ulong() << endl;
             expSuma = expSuma.to_ulong() - k;
-            cout << expSuma.to_ulong() << endl;
+
         }
 
         if ((r[0] == 1 && st[0] == 1) || (r[0] == 1 && st[0] == 0 && P[0]==1)){
@@ -210,8 +207,6 @@ union Code ALU::suma(union Code a, union Code b){
 
         }
 
-
-        cout << expSuma << endl;
         bitset<24> mantSuma = P;
         bitset<1> signSuma;
 
@@ -234,7 +229,6 @@ union Code ALU::suma(union Code a, union Code b){
             return res;
         }
 
-        cout << mantSuma << endl;
         bitset<32> resultado;
         for(int i = 0; i < 23; i++){
             resultado[i] = mantSuma[i];
@@ -328,7 +322,7 @@ union Code ALU::multiplicacion(union Code a, union Code b){
             }
 
         }else {
-            //P = P + 0?
+            //P = P + 0
         }
         bitset<1> lastBit;
         lastBit[0] = P[0];
@@ -344,8 +338,6 @@ union Code ALU::multiplicacion(union Code a, union Code b){
 
     PA = (P.to_ulong() << 24) | mantisaA.to_ulong();
 
-
-    cout << PA << endl;
     if (PA[47] == 0){
         PA <<= 1;
     }else {
@@ -417,7 +409,7 @@ union Code ALU::multiplicacion(union Code a, union Code b){
             }
             int t = min(t1,t2);
             expProd = expProd.to_ulong() - t;
-            //desplazar (P,A) t bits izq    ARITMETICAMENTE??
+            //desplazar (P,A) t bits izq
             PA <<= t;
 
         }else {
@@ -448,26 +440,11 @@ union Code ALU::restar(union Code a, union Code b)
     }else{
         b.bitfield.sign = 0;
     }
-    //this->negate (b);
     return this->suma (a,b);
 }
 
 union Code ALU::division(union Code a, union Code b)
 {
-    if(a.numero == 0 && b.numero != 0){
-        union Code res;
-        res.bitfield.expo = 0;
-        res.bitfield.partFrac = 0;
-        res.bitfield.sign = 0;
-        return res;
-    }
-    if(a.numero != 0 && b.numero == 0  || a.numero == 0 && b.numero == 0){
-        union Code nan;
-        nan.bitfield.sign = 0;
-        nan.bitfield.partFrac = 1;
-        nan.bitfield.expo = 255;
-        return nan;
-    }
     if(a.numero == b.numero || a.numero == -b.numero){
         union Code res;
         res.bitfield.expo = 127;
@@ -530,18 +507,16 @@ union Code ALU::division(union Code a, union Code b)
     unsigned int decimalA = partFracA.to_ulong();
     double fraccionarioA = decimalA / std::pow(2, 23);
     float valorA = 1 + fraccionarioA;   //Si es denormal??
-    std::cout << "El valor fraccionario de A es: " << valorA << std::endl;
 
 
     bitset<23> partFracB;
     for(int i = 0; i < 23; i++){
         partFracB[i] = mantisaB[i];
     }
-    cout << mantisaB<<endl;
+
     unsigned int decimalB = partFracB.to_ulong();
     double fraccionarioB = decimalB / std::pow(2, 23);
     float valorB = 1 + fraccionarioB;
-    std::cout << "El valor fraccionario de B es: " << valorB << std::endl;
 
     float Bprima;
     if (valorB >= 1 && valorB < 1.25) {
@@ -549,7 +524,6 @@ union Code ALU::division(union Code a, union Code b)
     }else if (valorB >= 1.25 && valorB < 2){
         Bprima = 0.8;
     }
-    cout << "B PRIMA VALE " << Bprima <<endl;
 
     union Code A = conver.floattoIEE(valorA);
     union Code B = conver.floattoIEE(valorB);
@@ -568,18 +542,11 @@ union Code ALU::division(union Code a, union Code b)
     float num;
 
     while (1){
-        cout << "El numero X es"<<X.numero << endl;
-        cout << "El numero Y es"<<Y.numero << endl;
         R = this->restar(val,Y);
-        cout << "El numero R es"<<R.numero << endl;
         auxY = this->multiplicacion (Y,R);
-        cout << "El numero AUX Y es"<<auxY.numero << endl;
         auxX = this->multiplicacion (X,R);
-        cout << "El numero AUX X es"<<auxX.numero << endl;
         resultado = this->restar(auxX,X);
-        //resultado2 = this->positive (resultado);
         num = conver.IEEtofloat (resultado);
-        cout << "El numero float es"<<num << endl;
 
         if (num > 0.0001){
             break;
@@ -598,68 +565,21 @@ union Code ALU::division(union Code a, union Code b)
         signDiv[0] = signA[0] ^ signB[0];
 
         bitset<8> expDiv;
-        expDiv = expA.to_ulong () - expB.to_ulong () + expo.to_ulong ();
+
+        float aux = expA.to_ulong() - expB.to_ulong() + expo.to_ulong();
+        if(aux >= 255){
+            expDiv = 255;
+            fracc = 0;
+        }else{
+            expDiv = expA.to_ulong () - expB.to_ulong () + expo.to_ulong ();
+        }
 
         union Code res;
         res.bitfield.sign = signDiv.to_ulong();
         res.bitfield.expo = expDiv.to_ulong();
         res.bitfield.partFrac = fracc.to_ulong();
 
-        cout << signDiv << expDiv << fracc << endl;
-
         return res;
 
 }
-
-union Code ALU::negate(union Code num) {
-    union Code neg;
-
-    if (num.bitfield.expo == 255 && num.bitfield.partFrac != 0) {
-        // el número original es NaN, mantener el mismo valor
-        neg = num;
-    } else if (num.bitfield.expo == 255 && num.bitfield.partFrac == 0) {
-        // el número original es infinito, cambiar el signo
-        neg.bitfield.partFrac = 0;
-        neg.bitfield.expo = 255;
-        neg.bitfield.sign = 1;
-    } else if (num.bitfield.expo == 0 && num.bitfield.partFrac == 0) {
-        // el número original es cero, no se puede obtener su negativo
-        neg = num;
-    } else {
-        // el número original es finito, cambiar el signo
-        neg.bitfield.partFrac = num.bitfield.partFrac;
-        neg.bitfield.expo = num.bitfield.expo;
-        neg.bitfield.sign = 1 - num.bitfield.sign;
-    }
-
-    return neg;
-}
-
-union Code ALU::positive(union Code num) {
-    union Code pos;
-
-    if (num.bitfield.expo == 255 && num.bitfield.partFrac != 0) {
-        // el número original es NaN, mantener el mismo valor
-        pos = num;
-    } else if (num.bitfield.expo == 255 && num.bitfield.partFrac == 0) {
-        // el número original es infinito, cambiar el signo
-        pos.bitfield.partFrac = 0;
-        pos.bitfield.expo = 255;
-        pos.bitfield.sign = 0;
-    } else if (num.bitfield.expo == 0 && num.bitfield.partFrac == 0) {
-        // el número original es cero, no se puede obtener su positivo
-        pos = num;
-    } else {
-        // el número original es finito, cambiar el signo
-        pos.bitfield.partFrac = num.bitfield.partFrac;
-        pos.bitfield.expo = num.bitfield.expo;
-        pos.bitfield.sign = 0;
-    }
-
-    return pos;
-}
-
-
-
-
 
