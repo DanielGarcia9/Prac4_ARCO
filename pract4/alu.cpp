@@ -563,7 +563,6 @@ union Code ALU::division(union Code a, union Code b)
     union Code auxY;
     union Code auxX;
     union Code resultado;
-    union Code resultado2;
     union Code val;
     val.numero = 2;
     float num;

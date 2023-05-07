@@ -363,31 +363,134 @@ void MainWindow::on_pushDiv_clicked()
     float num1 = val1.toFloat(&esNumero);
     float num2 = val2.toFloat(&esNumero2);
 
-    if (esNumero && esNumero2) {
+    if (num2 == 0 && esNumero){
         union Code a = conver.floattoIEE(num1);
         union Code b = conver.floattoIEE(num2);
         IEEHEX(a, 1);
         IEEHEX(b, 2);
+        ui->textBi->setText("01111111100000000000000000000001");
+        union Code f;
+        f.numero = nanf("");
+        REALHEX(f);
+    }
+    else if (num1 == 0 && esNumero2){
+        union Code a = conver.floattoIEE(num1);
+        union Code b = conver.floattoIEE(num2);
+        IEEHEX(a, 1);
+        IEEHEX(b, 2);
+        ui->textBi->setText ("00000000000000000000000000000000");
+        union Code res;
+        res.bitfield.sign = 0;
+        res.bitfield.expo = 0;
+        res.bitfield.partFrac = 0;
+        REALHEX(res);
 
-        union Code result = alu.division(a, b);
+    }
+    else  {
+        if (esNumero && esNumero2){
+            union Code a = conver.floattoIEE(num1);
+            union Code b = conver.floattoIEE(num2);
+            IEEHEX(a, 1);
+            IEEHEX(b, 2);
 
-        bitset<1> sign(result.bitfield.sign);
-        bitset<8> exp(result.bitfield.expo);
-        bitset<23> frac(result.bitfield.partFrac);
+            union Code result = alu.division(a, b);
 
-        bitset<32> resultado((sign.to_ulong() << 31) | (exp.to_ulong() << 23) | frac.to_ulong());
+            bitset<1> sign(result.bitfield.sign);
+            bitset<8> exp(result.bitfield.expo);
+            bitset<23> frac(result.bitfield.partFrac);
 
-        string re = resultado.to_string();
-        ui->textBi->setText(QString::fromStdString(re));
+            bitset<32> resultado((sign.to_ulong() << 31) | (exp.to_ulong() << 23) | frac.to_ulong());
 
-        REALHEX(result);
+            string re = resultado.to_string();
+            ui->textBi->setText(QString::fromStdString(re));
 
-    }else{
-        if(false){
+            REALHEX(result);
+        }else {
+            if(isinf(num1) && isinf(num2)){
+                    union Code a;
+                    if(num1 > 0){
+                        a.bitfield.sign = 0;
+                    }else{
+                        a.bitfield.sign = 1;
+                    }
+                    a.bitfield.expo = 255;
+                    a.bitfield.partFrac = 0;
+                    IEEHEX(a, 1);
+                    union Code b;
+                    if(num2 > 0){
+                        b.bitfield.sign = 0;
+                    }else{
+                        b.bitfield.sign = 1;
+                    }
+                    b.bitfield.expo = 255;
+                    b.bitfield.partFrac = 0;
+                    IEEHEX(b, 2);
+                    union Code res;
+                    if(a.bitfield.sign != b.bitfield.sign){
+                        res.bitfield.sign = 1;
+                        ui->textBi->setText("11111111100000000000000000000000");
+                    }else{
+                        res.bitfield.sign = 0;
+                        ui->textBi->setText("01111111100000000000000000000000");
+                    }
+                    res.bitfield.expo = 255;
+                    res.bitfield.partFrac = 0;
+                    REALHEX(res);
+            }
+            else if(isinf(num1) && esNumero2){
+                union Code b = conver.floattoIEE(num2);
+                IEEHEX(b, 2);
+                union Code a;
+                if(num1 > 0){
+                    a.bitfield.sign = 0;
+                }else{
+                    a.bitfield.sign = 1;
+                }
+                a.bitfield.expo = 255;
+                a.bitfield.partFrac = 0;
+                IEEHEX(a, 1);
+                union Code res;
+                if((num1 < 0 && num2 > 0) || (num1 > 0 && num2 < 0)){
+                    res.bitfield.sign = 1;
+                    ui->textBi->setText("11111111100000000000000000000000");
+                }else{
+                    res.bitfield.sign = 0;
+                    ui->textBi->setText("01111111100000000000000000000000");
+                }
+                res.bitfield.expo = 255;
+                res.bitfield.partFrac = 0;
+                REALHEX(res);
+            }
+            else if(isinf(num2) && esNumero){
+                union Code a = conver.floattoIEE(num1);
+                IEEHEX(a, 1);
+                union Code b;
+                if(num2 > 0){
+                    b.bitfield.sign = 0;
+                }else{
+                    b.bitfield.sign = 1;
+                }
+                b.bitfield.expo = 255;
+                b.bitfield.partFrac = 0;
+                IEEHEX(b, 2);
+                union Code res;
+                if((num1 < 0 && num2 > 0) || (num1 > 0 && num2 < 0)){
+                    res.bitfield.sign = 1;
+                    ui->textBi->setText("11111111100000000000000000000000");
+                }else{
+                    res.bitfield.sign = 0;
+                    ui->textBi->setText("01111111100000000000000000000000");
+                }
+                res.bitfield.expo = 255;
+                res.bitfield.partFrac = 0;
+                REALHEX(res);
 
-        }else{
-            cout << "Valores incorrecto" << endl;  //Val mal
+
+                }else{
+                    cout << "Valores incorrecto" << endl;  //Val mal
+                }
         }
+
     }
 
 }
